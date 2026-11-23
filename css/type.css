@@ -1,0 +1,55 @@
+/* =====================================================================
+   Typography — every line of text on the site uses one of these styles.
+   Sizes are fluid: smallest phone (320px) → large desktop (1440px).
+   ===================================================================== */
+
+/* Fonts from the invitation PDF, self-hosted (SIL OFL): Cormorant Garamond, Cinzel Decorative, Great Vibes, IM Fell Double Pica */
+@font-face { font-family: "Cormorant Garamond"; src: url("../fonts/cormorant-garamond-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Cormorant Garamond"; src: url("../fonts/cormorant-garamond-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Cormorant Garamond"; src: url("../fonts/cormorant-garamond-latin-600-normal.woff2") format("woff2"); font-weight: 600 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Cormorant Garamond"; src: url("../fonts/cormorant-garamond-latin-400-italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "Cormorant Garamond"; src: url("../fonts/cormorant-garamond-latin-500-italic.woff2") format("woff2"); font-weight: 500 700; font-style: italic; font-display: swap; }
+@font-face { font-family: "Cinzel Decorative"; src: url("../fonts/cinzel-decorative-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Cinzel Decorative"; src: url("../fonts/cinzel-decorative-latin-700-normal.woff2") format("woff2"); font-weight: 500 900; font-display: swap; }
+@font-face { font-family: "Great Vibes"; src: url("../fonts/great-vibes-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "IM Fell Double Pica"; src: url("../fonts/im-fell-double-pica-latin-400-italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+
+:root {
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-names:   "IM Fell Double Pica", "Cormorant Garamond", Georgia, serif;   /* the couple's names on the cover */
+  --font-script:  "Great Vibes", cursive;                                    /* event pages + the guest's handwriting */
+  --font-caps:    "Cinzel Decorative", "Cormorant Garamond", serif;          /* details, labels, buttons */
+  --font-body:    "Cormorant Garamond", Georgia, serif;
+  --font-urdu:    "Amiri", "Noto Naskh Arabic", serif;   /* classical Naskh: pairs with ST Nazm */
+
+  /* size / line-height / tracking per style */
+  --type-h2-size:      clamp(36px, 9vw, 54px);    --type-h2-lh: 1.08;
+  --type-h3-size:      clamp(26px, 6.4vw, 32px);    --type-h3-lh: 1.15;
+  --type-quote-size:   clamp(22px, 5.4vw, 26px);    --type-quote-lh: 1.4;
+  --type-body1-size:   18px;                      --type-body1-lh: 26px;   /* 8-pt grid */
+  --type-body2-size:   16px;                      --type-body2-lh: 22px;
+  --type-label-size:   11px;                      --type-label-lh: 16px;    --type-label-track: .2em;
+  --type-caption-size: 12px;                      --type-caption-lh: 16px;   /* same size as label */
+  --type-button-size:  14px;                      --type-button-track: .16em;
+  --type-numeral-size: clamp(40px, 11vw, 52px);   /* the event day: 03 · 11 · 13 */
+  --type-event-en-size: 18px;   /* event title lock-up: English bold, left */
+  --type-event-ur-size: 21px;   /* … and Urdu bold, right */
+}
+
+.t-h2      { font-family: var(--font-names); font-style: italic; font-weight: 400; font-size: var(--type-h2-size); line-height: var(--type-h2-lh); }
+.t-h3      { font-family: var(--font-display); font-weight: 400; font-size: var(--type-h3-size); line-height: var(--type-h3-lh); }
+.t-quote   { font-family: var(--font-display); font-weight: 500; font-size: var(--type-quote-size); line-height: var(--type-quote-lh); }
+.t-body-1  { font-family: var(--font-body); font-weight: 400; font-size: var(--type-body1-size); line-height: var(--type-body1-lh); }
+.t-body-2  { font-family: var(--font-body); font-weight: 400; font-size: var(--type-body2-size); line-height: var(--type-body2-lh); }
+.t-body-2--display { font-family: var(--font-display); }   /* body sizes set in ST Nazm, for invitation wording */
+.t-label   { font-family: var(--font-caps); font-weight: 400; font-size: var(--type-label-size); line-height: var(--type-label-lh); letter-spacing: var(--type-label-track); text-transform: uppercase; }
+.t-caption { font-family: var(--font-body); font-weight: 400; font-size: var(--type-caption-size); line-height: var(--type-caption-lh); }
+.t-button  { font-family: var(--font-body); font-weight: 700; text-transform: uppercase; font-size: var(--type-button-size); line-height: 1; letter-spacing: var(--type-button-track); }
+
+/* colour helpers (semantic only) */
+.c-secondary { color: var(--color-text-secondary); }
+.c-muted     { color: var(--color-text-muted); }
+.c-gold      { color: var(--color-decor-gold); }
+
+/* Urdu and Arabic text is always right-aligned */
+[lang="ur"], [lang="ar"] { text-align: right; }

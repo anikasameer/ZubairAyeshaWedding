@@ -1,0 +1,28 @@
+/* =====================================================================
+   Materials — the paper, wax and light the invite is made of.
+   Pure CSS (plus small inline SVG noise): no image requests.
+   Composite pieces that use them live in their own files:
+     envelope + wax seal + rose · css/envelope.css
+     calendar note + Save-the-date stamp · css/calendar.css
+     event stamp cards + leaf shadows · css/page.css (js/events.js, js/shadows.js)
+   ===================================================================== */
+
+:root {
+  /* Papers */
+  --card-paper:  #FDF7E4;   /* ivory beige white: invitation card, page sheet, RSVP sheet */
+  --env-paper:   #F5E9CF;   /* envelope outside (pocket, flap) */
+  --env-paper-2: #E9D9B8;   /* envelope inside, a shade deeper */
+  --env-liner:   #A9C9BC;   /* envelope liner and its fold edge */
+  /* fine fractal grain, multiplied over any paper colour */
+  --paper-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+
+  /* Wax: the seal on the envelope (a deep red wax, lit from the top left) */
+  --wax:        #D2AC58;
+  --wax-depth:  #8A6826;
+  --wax-lip:    #F4DE9E;
+}
+
+/* Natural paper: ivory with a fine grain. Card, page sheet and RSVP sheet. */
+.paper-natural { position: relative; isolation: isolate; background-color: var(--card-paper); }
+.paper-natural::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
+  opacity: .22; mix-blend-mode: multiply; background-image: var(--paper-noise); }

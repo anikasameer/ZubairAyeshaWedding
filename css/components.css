@@ -1,0 +1,197 @@
+/* =====================================================================
+   Components — built only from semantic tokens + type styles.
+   Interaction feedback: :active (tap/click) and :focus-visible. No :hover.
+   ===================================================================== */
+
+/* ---------- Icon (Material Symbols Rounded) ----------
+   One knob set for every icon on the site. */
+:root { --icon-fill: 0; --icon-weight: 300; --icon-grade: 0; --icon-size: 20px; }
+.icon {
+  font-family: "Material Symbols Rounded";
+  font-weight: normal; font-style: normal; line-height: 1; letter-spacing: normal;
+  font-size: var(--icon-size); width: 1em; height: 1em; overflow: hidden;
+  display: inline-block; white-space: nowrap; direction: ltr; flex: none;
+  font-variation-settings: "FILL" var(--icon-fill), "wght" var(--icon-weight), "GRAD" var(--icon-grade), "opsz" 24;
+  -webkit-font-feature-settings: "liga"; font-feature-settings: "liga";
+  user-select: none;
+}
+
+/* ---------- Button ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  position: relative; min-height: 40px; padding: 0 var(--space-5); border-radius: var(--radius-pill);   /* soft pill, like the cartouche ends */
+  text-decoration: none; white-space: nowrap; user-select: none;
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background-color var(--dur-base);
+}
+.btn::after { content: ""; position: absolute; inset: -4px 0; }
+/* Optical centring: ST Nazm sits high in its line box (≈4px more space below the letters than above),
+   so labels get 4px extra padding on top — the space above and below the letters is then equal. */
+.btn { padding-top: 1px; }
+.btn--icon { padding-top: 0; }
+.btn:active { transform: scale(.97); }
+.btn[disabled], .btn[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+.btn--secondary { background: transparent; color: var(--color-text-primary); box-shadow: none; }
+/* Secondary stroke: dull gold with a slow shimmer sweeping along it (after Framer "Shiny text effect") */
+.btn--secondary::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: var(--shimmer-gradient);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: shimmer var(--shimmer-dur) linear infinite; }
+.btn--tertiary  { background: none; box-shadow: none; border: 0; color: inherit; padding: 0 var(--space-4); }   /* text-only: no fill, no outline */
+.btn--tertiary:focus, .btn--tertiary:focus-visible { outline: none; }
+.btn--tertiary:focus-visible { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; }   /* keyboard focus stays visible */
+.btn--block     { width: 100%; }
+.btn--icon      { width: 40px; padding: 0; }
+.btn--icon::after { inset: -4px; }
+/* Sizes: large 48px (the page's final call to action) · medium 40px (default) · small 32px (tap target stays 48px) */
+.btn--lg { min-height: 48px; padding: 0 var(--space-6); gap: var(--space-2); --type-button-size: 16px; --icon-size: 22px; }   /* large: the page's final call to action */
+.btn--lg:not(.btn--icon) { padding-top: 2px; }   /* optical centring scales with the label */
+.btn--lg.btn--icon { width: 48px; padding: 0; --icon-size: 24px; }   /* icon button, large: 48px with a 24px icon (close on sheets and panels); tap area 56px */
+.btn--sm { min-height: 32px; padding: 0 var(--space-4); gap: var(--space-1); --type-button-size: 13px; --icon-size: 16px; }
+.btn--sm::after { inset: -8px 0; }
+.btn--sm:not(.btn--icon) { padding-top: 1px; }   /* optical centring for the small size */
+.btn--sm.btn--icon { width: 32px; padding: 0; }
+.btn--sm.btn--icon::after { inset: -8px; }
+/* Inverse: for dark or photo backgrounds — colours are built in */
+.btn--inverse.btn--primary   { --sh-base: var(--shimmer-base-inverse); --sh-mid: var(--shimmer-mid-inverse); --sh-hi: var(--shimmer-hi-inverse); --sh-glint: #FFFFFF; color: var(--color-text-on-inverse-btn); box-shadow: none; }
+.btn--inverse.btn--secondary { color: var(--color-text-inverse); --sh-base: var(--shimmer-base-inverse); --sh-mid: var(--shimmer-mid-inverse); --sh-hi: var(--shimmer-hi-inverse); --sh-glint: #FFFFFF; }
+.btn--inverse.btn--tertiary { --sh-base: var(--shimmer-base-inverse); --sh-mid: var(--shimmer-mid-inverse); --sh-hi: var(--shimmer-hi-inverse); --sh-glint: #FFFFFF; }
+
+/* ---------- Ornament divider ---------- */
+.ornament { display: flex; align-items: center; gap: var(--space-3); color: var(--color-decor-gold); width: min(220px, 70%); margin-inline: auto; }
+.ornament::before, .ornament::after { content: ""; flex: 1; height: 1px; background: currentColor; opacity: .6; }
+.ornament svg { width: 18px; height: 18px; }
+
+/* ---------- Text field ----------
+   Label above a 48px input on a translucent white wash, so the paper shows through. 16px text stops iOS zoom-on-focus. */
+.field { display: flex; flex-direction: column; gap: var(--space-2); }
+.field__label { color: var(--color-text-muted); }
+.field__input { width: 100%; min-height: 48px; padding: 0 var(--space-4); border-radius: var(--radius-sm); border: 1px solid var(--color-border-default);
+  background: rgb(255 255 255 / .6); color: var(--color-text-primary); font-family: var(--font-body); font-size: var(--type-body1-size); }
+.field__input:focus-visible { outline: 2px solid var(--gold18k-400); outline-offset: 1px; }
+
+/* ---------- Checkbox row ----------
+   The whole row is the tap target: a gold-glass box (the primary button's material) + a title and a hint. */
+.check-row { display: flex; align-items: center; gap: var(--space-4); min-height: 64px; padding: var(--space-3) 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.check-row + .check-row { border-top: 1px solid var(--color-rule); }
+.check-row input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.check { flex: none; width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center;
+  border: 1.5px solid var(--color-border-default); background: rgb(255 255 255 / .5); transition: background .2s, border-color .2s; }
+.check .icon { --icon-size: 20px; color: var(--ink-900); opacity: 0; transform: scale(.6); transition: opacity .18s, transform .22s var(--ease-out); }
+.check-row input:checked + .check { background: var(--color-gold-glass); border-color: var(--color-gold-glass-edge);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .8); }
+.check-row input:checked + .check .icon { opacity: 1; transform: none; }
+.check-row input:focus-visible + .check { outline: 2px solid var(--gold18k-400); outline-offset: 2px; }
+.check-row__text { display: flex; flex-direction: column; gap: 2px; }
+.check-row__title { color: var(--color-text-primary); }
+.check-row__hint { color: var(--color-text-muted); }
+.check-row.is-disabled { cursor: default; opacity: .55; }
+
+/* ---------- Segmented switch (Accept / Decline) ----------
+   Two options in a pressed-paper well; the chosen one sits on a sliding gold-glass thumb (the primary button's material). */
+.segmented { position: relative; display: grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--ink-900) 5%, transparent); box-shadow: inset 0 1px 2px rgb(42 34 29 / .10), inset 0 0 0 1px var(--color-border-subtle); }
+.segmented__thumb { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: calc(var(--radius-sm) - 2px);
+  background: linear-gradient(180deg, rgb(255 255 255 / .5) 0%, rgb(255 255 255 / .14) 46%, rgb(255 255 255 / 0) 54%, rgb(255 250 235 / .14) 100%), var(--color-gold-glass);
+  border: 1px solid var(--color-gold-glass-edge);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .85), 0 6px 14px -8px color-mix(in srgb, var(--gold18k-600) 60%, transparent);
+  transition: translate var(--dur-base) var(--ease-out); }
+.segmented[data-value="no"] .segmented__thumb { translate: 100% 0; }
+.segmented__opt { position: relative; z-index: 1; min-height: 44px; padding: 4px var(--space-2) 0; border: 0; background: none; border-radius: calc(var(--radius-sm) - 2px);
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--color-text-muted); text-align: center; line-height: 1.2; cursor: pointer;
+  transition: color var(--dur-base), transform var(--dur-fast) var(--ease-out); -webkit-tap-highlight-color: transparent; }
+.segmented__opt .icon { --icon-size: 18px; margin-top: -4px; }
+.segmented__opt:active { transform: scale(.97); }
+.segmented__opt:focus-visible { outline: 2px solid var(--gold18k-400); outline-offset: 2px; }
+.segmented__opt[aria-checked="true"] { color: var(--color-text-on-gold); text-shadow: 0 1px 0 rgb(255 255 255 / .5); }
+@media (max-width: 359px) { .segmented { grid-template-columns: 1fr; } .segmented__thumb { width: auto; right: 4px; height: calc(50% - 4px); bottom: auto; }
+  .segmented[data-value="no"] .segmented__thumb { translate: 0 100%; } }   /* very narrow phones: stack the two options */
+@media (prefers-reduced-motion: reduce) { .segmented__thumb { transition: none; } }
+
+/* ---------- Stepper (guest count) ----------
+   Two small secondary icon buttons around the value; no tinted well. Limits disable the button that would pass them. */
+.stepper { display: flex; align-items: center; gap: var(--space-3); flex: none; }
+.stepper__value { min-width: 2ch; text-align: center; color: var(--color-text-primary); font-variant-numeric: tabular-nums; position: relative; top: 2px; }   /* digits sit high in the line box: nudged to the buttons' optical centre */
+.stepper .btn:disabled { opacity: .35; animation: none; }
+
+/* 18k gold metal: a moving band (deep → body → lit → glint → lit → body → deep) over a softly lit base.
+   --sh-* let a context (e.g. .btn--inverse) swap the palette. */
+.btn--secondary::before, .shimmer-text { --shimmer-gradient:
+  linear-gradient(110deg, var(--sh-base, var(--shimmer-base)) 36%, var(--sh-mid, var(--shimmer-mid)) 42%, var(--sh-hi, var(--shimmer-hi)) 47%, var(--sh-glint, var(--shimmer-glint)) 50%, var(--sh-hi, var(--shimmer-hi)) 53%, var(--sh-mid, var(--shimmer-mid)) 58%, var(--sh-base, var(--shimmer-base)) 64%) 150% 0 / 300% 100% no-repeat,
+  linear-gradient(180deg, var(--sh-mid, var(--shimmer-mid)) 0%, var(--sh-base, var(--shimmer-base)) 45%, var(--sh-base, var(--shimmer-base)) 100%); }
+/* Shimmer: the highlight sweeps across in the first 40% of the cycle, then rests — subtle, never constant */
+@keyframes shimmer { 0% { background-position: 150% 0, 0 0; animation-timing-function: cubic-bezier(.45,0,.55,1); } 75%, 100% { background-position: -50% 0, 0 0; } }   /* slow eased glide (4.1s), then a short rest */
+@media (prefers-reduced-motion: reduce) { .btn--secondary::before { animation: none; } }
+
+/* Shimmering gold text (names): the same dull-gold sweep as the button strokes, clipped to the letters */
+.shimmer-text { color: transparent; -webkit-background-clip: text; background-clip: text;
+  background: var(--shimmer-gradient);
+  -webkit-background-clip: text; background-clip: text; animation: shimmer var(--shimmer-dur) linear infinite; }
+@media (prefers-reduced-motion: reduce) { .shimmer-text { animation: none; } }
+
+/* The couple's names: a lighter, brighter 18k gold (large display text, 3.3:1 on the ivory paper) */
+.invite-card__names > .w.shimmer-text, .page__names > .w.shimmer-text { --sh-base: var(--gold18k-600); --sh-mid: var(--gold18k-400); --sh-hi: var(--gold18k-200); --sh-glint: var(--gold18k-100); }
+
+/* Gold glint on every button.
+   Secondary and tertiary: the label (text and icon) is 18k gold with the same sweeping glint as the stroke.
+   Primary: the glint sweeps across the filled button; the label stays light. Same timing as all shimmers. */
+.btn--primary, .btn--secondary, .btn--tertiary { --shimmer-gradient:
+  linear-gradient(110deg, var(--sh-base, var(--shimmer-base)) 36%, var(--sh-mid, var(--shimmer-mid)) 42%, var(--sh-hi, var(--shimmer-hi)) 47%, var(--sh-glint, var(--shimmer-glint)) 50%, var(--sh-hi, var(--shimmer-hi)) 53%, var(--sh-mid, var(--shimmer-mid)) 58%, var(--sh-base, var(--shimmer-base)) 64%) 150% 0 / 300% 100% no-repeat,
+  linear-gradient(180deg, var(--sh-mid, var(--shimmer-mid)) 0%, var(--sh-base, var(--shimmer-base)) 45%, var(--sh-base, var(--shimmer-base)) 100%); }
+.btn--secondary, .btn--tertiary {
+  background: var(--shimmer-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
+  animation: shimmer var(--shimmer-dur) linear infinite; }
+/* Primary: gold glass. A translucent 18k gold tint with a soft frosted blur, a glassy reflection on the upper half,
+   a light pale-gold edge (no dark stroke) and a warm glow beneath. A narrow soft sheen glides across on the shared
+   shimmer timing. Label in deep 18k gold. */
+.btn--primary {
+  background:
+    linear-gradient(115deg, transparent 45%, rgb(255 252 240 / .2) 47.5%, rgb(255 254 248 / .75) 50%, rgb(255 252 240 / .2) 52.5%, transparent 55%) 150% 0 / 300% 100% no-repeat,
+    linear-gradient(180deg, rgb(255 255 255 / .5) 0%, rgb(255 255 255 / .14) 46%, rgb(255 255 255 / 0) 54%, rgb(255 250 235 / .14) 100%);
+  background-color: var(--color-gold-glass);
+  -webkit-backdrop-filter: blur(8px) saturate(1.25); backdrop-filter: blur(8px) saturate(1.25);
+  border: 1px solid var(--color-gold-glass-edge);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .85), inset 0 -1px 0 color-mix(in srgb, var(--gold18k-400) 35%, transparent),
+              0 10px 24px -12px color-mix(in srgb, var(--gold18k-600) 55%, transparent);
+  color: var(--color-text-on-gold); text-shadow: 0 1px 0 rgb(255 255 255 / .5);   /* deep gold, nudged darker for 5:1 on the richer tint */
+  animation: shimmer var(--shimmer-dur) linear infinite; }
+.btn--secondary .icon, .btn--tertiary .icon { background: var(--shimmer-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
+  animation: shimmer var(--shimmer-dur) linear infinite; }   /* icons are their own boxes, so they carry the gold too */
+@media (prefers-reduced-motion: reduce) { .btn--primary, .btn--secondary, .btn--tertiary, .btn--secondary .icon, .btn--tertiary .icon { animation: none; } }
+
+/* Ornamental dividers carry the gold glint too (the names' lighter 18k gold): the band sweeps the left rule,
+   flashes on the star, then sweeps the right rule — one pass left to right, on the shared shimmer timing. */
+.ornament { --sh-base: var(--gold18k-600); --sh-mid: var(--gold18k-400); --sh-hi: var(--gold18k-200); --sh-glint: var(--gold18k-100); color: var(--sh-base); }
+.ornament::before, .ornament::after { opacity: 1;
+  background: linear-gradient(110deg, var(--sh-base) 36%, var(--sh-mid) 42%, var(--sh-hi) 47%, var(--sh-glint) 50%, var(--sh-hi) 53%, var(--sh-mid) 58%, var(--sh-base) 64%) 150% 0 / 300% 100% no-repeat, var(--sh-base);
+  animation: shimmer var(--shimmer-dur) linear infinite; }
+.ornament::after { animation-delay: 2.4s; }
+.ornament svg { animation: ornament-glint var(--shimmer-dur) linear infinite; }
+@keyframes ornament-glint { 0%, 52% { color: var(--sh-base); } 58% { color: var(--sh-hi); } 62% { color: var(--sh-glint); } 66% { color: var(--sh-hi); } 72%, 100% { color: var(--sh-base); } }
+@media (prefers-reduced-motion: reduce) { .ornament::before, .ornament::after, .ornament svg { animation: none; } }
+
+.signature-line { display: block; }   /* one handwritten line per row (Signature.writeLines: two lines at most, then an ellipsis) */
+/* Handwritten guest name (js/signature.js): Playwrite BE VLG, written left to right by a soft-edged mask, in 18k gold with the glint */
+@property --sig-p { syntax: "<percentage>"; inherits: false; initial-value: 100%; }
+.signature { display: block; width: fit-content; max-width: 100%; font-family: var(--font-script); font-weight: 400; line-height: 1.9;
+  white-space: nowrap; padding: .2em .25em .45em; margin-block: -.2em -.35em; text-shadow: none;   /* room for Playwrite's deep descenders and loops: the reveal mask clips at this box */
+  --sh-base: var(--gold18k-600); --sh-mid: var(--gold18k-400); --sh-hi: var(--gold18k-200); --sh-glint: var(--gold18k-100);
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--sig-p) * 1.08 - 6%), transparent calc(var(--sig-p) * 1.08 + 2%));
+          mask-image: linear-gradient(90deg, #000 calc(var(--sig-p) * 1.08 - 6%), transparent calc(var(--sig-p) * 1.08 + 2%)); }
+
+
+/* ---------- Inline icons (see the script at the end of index.html) ---------- */
+.icon { font-size: 0 !important; width: var(--icon-size); height: var(--icon-size); line-height: 0; color: inherit; }
+.icon[data-i] { background: currentColor; -webkit-mask: var(--ic) center / contain no-repeat; mask: var(--ic) center / contain no-repeat; }
+.btn--secondary .icon[data-i], .btn--tertiary .icon[data-i] { background: var(--sh-base, var(--shimmer-base)); -webkit-background-clip: border-box; background-clip: border-box; animation: none; }
+.btn--secondary .icon, .btn--tertiary .icon { -webkit-text-fill-color: initial; }
+
+/* ---------- Primary button = the Walima banner: teal wash, cream lettering, fine gold edge ---------- */
+.btn--primary { background: linear-gradient(115deg, transparent 42%, rgb(255 250 235 / .35) 50%, transparent 58%) 150% 0 / 300% 100% no-repeat, linear-gradient(180deg, #8CC1B5 0%, #78B0A4 55%, #6AA397 100%);
+  border: 1px solid #E5CF98; color: #FDF2D8; text-shadow: 0 1px 1px rgb(15 68 80 / .35); -webkit-backdrop-filter: none; backdrop-filter: none;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .45), inset 0 0 0 3px rgb(253 242 216 / .0), 0 10px 22px -12px rgb(15 68 80 / .6); }
+.btn--primary::before { content: ""; position: absolute; inset: 3px; border-radius: inherit; border: 1px solid rgb(253 242 216 / .55); pointer-events: none; }
+
+/* The couple's names take the Bismillah's sage-teal, with the same slow glint */
+.invite-card__names > .w.shimmer-text, .page__names > .w.shimmer-text { --sh-base: #5B9086; --sh-mid: #79A79D; --sh-hi: #A3CBC2; --sh-glint: #E3F2EE; }
+.page__with, .invite-card__with { color: var(--color-text-card); }

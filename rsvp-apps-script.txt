@@ -1,0 +1,193 @@
+/**
+ * Zubair & Ayesha — guest list, invite links and RSVPs (Google Apps Script, bound to the Google Sheet)
+ *
+ * What it does
+ *  • "Guests" tab: type a guest's name and pick which events they're invited to. The sheet gives them a unique
+ *    Guest ID and their personal invite link automatically. Change the name or the events later and the link
+ *    updates; the Guest ID never changes.
+ *  • When a guest sends (or changes) their RSVP on the website, their row in "Guests" updates: status, the name
+ *    they typed, the events they're joining, guests and children. If they changed their name, it shows here,
+ *    still under the same Guest ID. Every answer is also logged in the "RSVPs" tab (one row per Guest ID).
+ *
+ * Setup (once, about 5 minutes) — see the setup guide for screenshots of each step
+ *  1. Open the Google Sheet → Extensions → Apps Script. Delete anything there, paste this whole file, Save.
+ *  2. Back in the sheet, reload the page. A "Wedding invite" menu appears → "Set up the sheet".
+ *     (Google asks you to authorise the script the first time: choose your account → Advanced → Go to … → Allow.)
+ *  3. In the "Settings" tab, put the website address in B2 (e.g. https://your-site.netlify.app).
+ *  4. Apps Script → Deploy → New deployment → ⚙ Select type: Web app.
+ *     Execute as: Me · Who has access: Anyone → Deploy. Copy the Web app URL (ends in /exec).
+ *  5. That URL goes in the website's config.js (rsvpEndpoint). Then add guests in the "Guests" tab.
+ *
+ * Website ⇄ script
+ *  GET  ?id=<guest id>  → { ok: true, rsvp: {…} | null }   the RSVP form is pre-filled with this
+ *  POST JSON body        → { ok: true }                      creates or updates the answer for body.id
+ */
+
+const GUESTS = "Guests", RSVPS = "RSVPs", SETTINGS = "Settings";
+const EVENT_NAMES = { "1": "Mehendi & Nikkah", "2": "Baraat", "3": "Walima" };
+// the dropdown in "Invited to" → the event codes used in the link (&e=…)
+const INVITE_OPTIONS = { "All 3 events": "123", "Baraat + Walima": "23", "Walima only": "3" };
+
+// Guests tab columns (1-based)
+const G = { NAME: 1, INVITED: 2, ID: 3, LINK: 4, STATUS: 5, RSVP_NAME: 6, ATTENDING: 7, ADULTS: 8, KIDS: 9, UPDATED: 10, SHORT: 11 };
+const G_HEAD = ["Guest name", "Invited to", "Guest ID (auto)", "Invite link (auto) — copy and send", "RSVP status", "Name on RSVP",
+  "Joining", "Guests (incl. them)", "Children 2–10", "Last updated", "Short link (run: Wedding invite → Make short links)"];
+const R_HEAD = ["Guest ID", "Name on RSVP", "Invited (codes)", "Joining (codes)", "Attending", "Guests", "Children", "Updated",
+  "Mehendi & Nikkah", "Baraat", "Walima"];
+
+/* ---------------- Sheet set-up & menu ---------------- */
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu("Wedding invite")
+    .addItem("Set up the sheet", "setup")
+    .addItem("Refresh all invite links", "refreshAllLinks")
+    .addItem("Make short links", "makeShortLinks")
+    .addToUi();
+}
+
+function setup() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  // Settings
+  let st = ss.getSheetByName(SETTINGS) || ss.insertSheet(SETTINGS);
+  if (!st.getRange("A1").getValue()) {
+    st.getRange("A1:B1").setValues([["Setting", "Value"]]).setFontWeight("bold");
+    st.getRange("A2:B2").setValues([["Website address", "https://"]]);
+    st.getRange("A3").setValue("Put the full address of the published invite in B2, then use Wedding invite → Refresh all invite links.");
+    st.setColumnWidth(1, 180); st.setColumnWidth(2, 420);
+  }
+  // Guests
+  let g = ss.getSheetByName(GUESTS) || ss.insertSheet(GUESTS, 0);
+  g.getRange(1, 1, 1, G_HEAD.length).setValues([G_HEAD]).setFontWeight("bold").setBackground("#F3EADB");
+  g.setFrozenRows(1);
+  const rule = SpreadsheetApp.newDataValidation().requireValueInList(Object.keys(INVITE_OPTIONS), true).setAllowInvalid(false).build();
+  g.getRange(2, G.INVITED, Math.max(g.getMaxRows() - 1, 1), 1).setDataValidation(rule);
+  [220, 200, 170, 420, 110, 200, 260, 90, 90, 150, 260].forEach((w, i) => g.setColumnWidth(i + 1, w));
+  g.getRange(2, G.ID, Math.max(g.getMaxRows() - 1, 1), 2).setFontColor("#6E5840");
+  // RSVPs log
+  let r = ss.getSheetByName(RSVPS) || ss.insertSheet(RSVPS);
+  r.getRange(1, 1, 1, R_HEAD.length).setValues([R_HEAD]).setFontWeight("bold").setBackground("#F3EADB");
+  r.setFrozenRows(1);
+  refreshAllLinks();
+}
+
+/* ---------------- Invite links (made as you type in "Guests") ---------------- */
+function siteUrl_() {
+  const st = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SETTINGS);
+  const v = st ? String(st.getRange("B2").getValue()).trim() : "";
+  return /^https?:\/\/[^/]+/.test(v) ? v.replace(/\/+$/, "") : "";
+}
+function slug_(s) {
+  return String(s).toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9\s-]/g, "")
+    .trim().replace(/[\s-]+/g, "-").slice(0, 24).replace(/-+$/, "") || "guest";
+}
+function newId_(name, sheet) {
+  const taken = new Set(sheet.getRange(2, G.ID, Math.max(sheet.getLastRow() - 1, 1), 1).getValues().map(r => String(r[0])));
+  let id;
+  do { id = slug_(name) + "-" + Math.random().toString(36).slice(2, 6); } while (taken.has(id));
+  return id;
+}
+function linkFor_(site, name, codes, id) {
+  if (!site) return "Add the website address in Settings!B2";
+  return site + "/?to=" + encodeURIComponent(name) + "&e=" + codes + "&g=" + encodeURIComponent(id);
+}
+// Fill (or refresh) the ID and link for one row of "Guests"
+function fillRow_(sheet, row, site) {
+  const [name, invited, id] = sheet.getRange(row, G.NAME, 1, 3).getValues()[0];
+  const n = String(name).trim();
+  if (!n) { if (!id) sheet.getRange(row, G.LINK).clearContent(); return; }
+  const inv = String(invited);
+  const gid = String(id).trim() || newId_(n, sheet);
+  if (!id) sheet.getRange(row, G.ID).setValue(gid);
+  // nothing is filled in for you: pick the events in "Invited to" and the link appears
+  if (!INVITE_OPTIONS[inv]) { sheet.getRange(row, G.LINK).setValue("Pick 'Invited to' (column B) to get the link"); return; }
+  sheet.getRange(row, G.LINK).setValue(linkFor_(site, n, INVITE_OPTIONS[inv], gid));
+  if (!sheet.getRange(row, G.STATUS).getValue()) sheet.getRange(row, G.STATUS).setValue("Not replied yet");
+}
+// Simple trigger: runs whenever someone edits the sheet
+function onEdit(e) {
+  const sheet = e.range.getSheet();
+  if (sheet.getName() === SETTINGS && e.range.getA1Notation() === "B2") return refreshAllLinks();
+  if (sheet.getName() !== GUESTS) return;
+  const top = e.range.getRow(), bottom = e.range.getLastRow(), left = e.range.getColumn(), right = e.range.getLastColumn();
+  if (right < G.NAME || left > G.INVITED || bottom < 2) return;   // only name / invited-to edits matter
+  const site = siteUrl_();
+  for (let r = Math.max(2, top); r <= bottom; r++) fillRow_(sheet, r, site);
+}
+function refreshAllLinks() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(GUESTS); if (!sheet) return;
+  const site = siteUrl_();
+  for (let r = 2; r <= sheet.getLastRow(); r++) fillRow_(sheet, r, site);
+}
+
+/* ---------------- Short links (menu: Wedding invite → Make short links) ---------------- */
+// Sends each long invite link to the free is.gd shortener and writes the short one into column K.
+// Re-run it after adding guests or changing a name / their events. Rows already done are skipped.
+function makeShortLinks() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(GUESTS); if (!sheet) return;
+  sheet.getRange(1, G.SHORT).setValue(G_HEAD[G.SHORT - 1]).setFontWeight("bold").setBackground("#F3EADB");
+  let made = 0, failed = 0;
+  for (let r = 2; r <= sheet.getLastRow(); r++) {
+    const long = String(sheet.getRange(r, G.LINK).getValue()).trim();
+    if (!/^https?:\/\//.test(long)) continue;
+    const cell = sheet.getRange(r, G.SHORT);
+    if (cell.getValue() && cell.getNote() === long) continue;          // already shortened for this exact link
+    try {
+      const res = UrlFetchApp.fetch("https://is.gd/create.php?format=simple&url=" + encodeURIComponent(long), { muteHttpExceptions: true });
+      const out = String(res.getContentText()).trim();
+      if (res.getResponseCode() === 200 && /^https?:\/\//.test(out)) { cell.setValue(out).setNote(long); made++; }
+      else { cell.setValue("Failed — run again"); failed++; }
+    } catch (err) { cell.setValue("Failed — run again"); failed++; }
+    Utilities.sleep(400);
+  }
+  SpreadsheetApp.getActiveSpreadsheet().toast(made + " short link(s) made" + (failed ? ", " + failed + " failed (run it again)" : ""), "Wedding invite", 6);
+}
+
+/* ---------------- Website ⇄ sheet ---------------- */
+function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+function findRow_(sheet, col, id) {
+  if (!sheet || sheet.getLastRow() < 2) return 0;
+  const ids = sheet.getRange(2, col, sheet.getLastRow() - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) if (String(ids[i][0]) === id) return i + 2;
+  return 0;
+}
+function rsvpSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(RSVPS);
+  if (!sh) { sh = ss.insertSheet(RSVPS); sh.appendRow(R_HEAD); sh.setFrozenRows(1); }
+  return sh;
+}
+
+function doGet(e) {
+  const id = String((e.parameter && e.parameter.id) || "").slice(0, 80);
+  if (!id) return json_({ ok: false, error: "missing id" });
+  const sh = rsvpSheet_(), row = findRow_(sh, 1, id);
+  if (!row) return json_({ ok: true, rsvp: null });
+  const v = sh.getRange(row, 1, 1, R_HEAD.length).getValues()[0];
+  return json_({ ok: true, rsvp: { id: v[0], name: v[1], invited: String(v[2]), events: String(v[3]).split(",").filter(String),
+    attending: v[4] === true || v[4] === "TRUE" || v[4] === "Yes", adults: Number(v[5]) || 0, kids: Number(v[6]) || 0, updatedAt: v[7] instanceof Date ? v[7].toISOString() : String(v[7]) } });
+}
+
+function doPost(e) {
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const r = JSON.parse(e.postData.contents);
+    const id = String(r.id || "").slice(0, 80); if (!id) return json_({ ok: false, error: "missing id" });
+    const ev = (r.events || []).map(String).filter(x => /^[123]$/.test(x));
+    const n = x => Math.max(0, Math.min(30, Number(x) || 0));
+    const name = String(r.name || "").slice(0, 120), attending = ev.length > 0;
+    const adults = attending ? Math.max(1, n(r.adults)) : 0, kids = attending ? n(r.kids) : 0, now = new Date();
+
+    // 1 · the RSVP log: one row per Guest ID, overwritten when they change their answer
+    const row = [id, name, String(r.invited || "").replace(/[^123]/g, ""), ev.join(","), attending ? "Yes" : "No", adults, kids, now,
+      ev.includes("1") ? "Yes" : "", ev.includes("2") ? "Yes" : "", ev.includes("3") ? "Yes" : ""];
+    const rs = rsvpSheet_(), at = findRow_(rs, 1, id);
+    if (at) rs.getRange(at, 1, 1, row.length).setValues([row]); else rs.appendRow(row);
+
+    // 2 · the guest list: update this guest's row (found by Guest ID), so the family sees answers next to the names
+    const gs = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(GUESTS), gr = findRow_(gs, G.ID, id);
+    if (gr) gs.getRange(gr, G.STATUS, 1, 6).setValues([[attending ? "Attending" : "Declined", name,
+      ev.map(x => EVENT_NAMES[x]).join(", "), adults, kids, now]]);
+    return json_({ ok: true });
+  } catch (err) {
+    return json_({ ok: false, error: String(err) });
+  } finally { lock.releaseLock(); }
+}

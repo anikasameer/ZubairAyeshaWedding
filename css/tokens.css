@@ -1,0 +1,135 @@
+/* =====================================================================
+   Zubair & Ayesha — Design tokens
+   Layer 1: primitives (the raw palette; components never use these directly where a semantic token exists)
+   Layer 2: semantic (what a colour is FOR)
+   Layer 3: event themes ([data-event] sets each celebration's ink)
+   Paper and wax materials: css/motifs.css · Type: css/type.css
+   ===================================================================== */
+
+:root {
+  /* ---------- 1. Primitives ---------- */
+
+  /* Sand: warm paper neutrals */
+  --sand-25:  #FFFCF2;
+  --sand-50:  #FDF7E4;
+  --sand-100: #F6ECD3;
+  --sand-700: #6B5560;
+
+  /* Ink: warm near-blacks for text */
+  --ink-900: #3A2D34;
+  --ink-700: #5A4850;
+  --ink-500: #85727B;
+
+  /* 18k gold: every interactive gold and every glint */
+  --gold18k-800: #8A4A68;   /* deep: legible gold text, ≈5:1 on the paper (AA) */
+  --gold18k-600: #B5738F;   /* body of the metal */
+  --gold18k-400: #E3A3B6;   /* lit gold */
+  --gold18k-200: #F6D3DB;   /* highlight */
+  --gold18k-100: #FFEFF2;   /* glint on display gold */
+
+  /* Print gold: quiet, non-interactive gold (card names, hairlines) */
+  --gold-200: #F3D9DF;
+  --gold-600: #D49AAE;
+
+  /* Moss & olive: the calendar note */
+  --moss-700:  #4F7F78;   /* a tone lighter: the Mehendi ink */
+  --moss-800:  #5F938A;   /* deep green paper */
+  --olive-300: #D3E6DD;   /* weekend dates on it */
+
+  /* Wax red: the envelope seal */
+  --maroon-400: #D58AA3;
+  --maroon-600: #B0587A;
+  --maroon-800: #6E2E4A;
+
+  /* Event inks: one per celebration, balanced to the same lightness (OKLCH L .44) with matched saturation,
+     so no event reads heavier than another; each ≈ 7:1 on the ivory paper (AA) */
+  --event-mehendi-ink: var(--moss-700);   /* the calendar's green, a tone lighter (#4A5930) */
+  --event-baraat-ink:  #6E1A30;           /* deep red */
+  --event-walima-ink:  #0F4450;           /* deep teal, nudged a touch warmer (toward green) to sit with the warm page */
+
+  /* ---------- 2. Semantic ---------- */
+
+  /* Backgrounds & surfaces */
+  --color-bg-page:         var(--sand-50);
+  --color-surface-overlay: rgb(58 45 52 / .38);   /* scrim behind sheets */
+  --color-note-paper:      var(--moss-800);       /* the calendar note (inverse) */
+  --color-tape:            rgb(253 251 247 / .55);   /* translucent paper tape */
+  --color-deboss:          #F1E6D6;               /* calligraphy pressed into the ivory paper */
+
+  /* Borders & rules */
+  --color-border-subtle:  rgb(212 154 174 / .30);
+  --color-border-default: rgb(181 115 143 / .45);
+  --color-rule:           color-mix(in srgb, var(--sand-700) 35%, transparent);   /* hairlines between list rows */
+
+  /* Text */
+  --color-text-primary:   var(--ink-900);
+  --color-text-secondary: var(--ink-700);
+  --color-text-muted:     var(--ink-500);
+  --color-text-card:        var(--sand-700);   /* body text on the paper */
+  --color-text-card-accent: var(--gold18k-600);   /* the couple's names (shown with the display-gold glint) */
+  --color-text-calendar:  var(--sand-25);      /* on the deep green note, 10:1 */
+  --color-text-weekend:   var(--olive-300);    /* weekends on the note, 5:1 */
+  --color-text-inverse:   var(--sand-25);      /* on dark or photo backgrounds */
+  --color-text-on-inverse-btn: var(--ink-900);
+  --color-text-on-gold:   color-mix(in srgb, var(--gold18k-800) 85%, var(--ink-900));   /* labels on gold glass, 5:1 */
+  --color-text-on-photo:        var(--gold18k-800);
+  --color-text-on-photo-light:  var(--moss-700);
+  --color-text-on-photo-accent: var(--gold18k-800);   /* the guest's name on the envelope view */
+
+  /* Gold glass: primary button, checked box, chosen switch option */
+  --color-gold-glass:      color-mix(in srgb, var(--gold18k-400) 58%, transparent);
+  --color-gold-glass-edge: color-mix(in srgb, var(--gold18k-200) 70%, #fff);
+
+  /* Gold shimmer: one moving band for every gold line, label and glint (5.5s: an eased 4.1s glide, then a rest) */
+  --shimmer-base:  var(--gold18k-800);
+  --shimmer-mid:   var(--gold18k-600);
+  --shimmer-hi:    var(--gold18k-400);
+  --shimmer-glint: var(--gold18k-200);
+  --shimmer-base-inverse: var(--gold18k-800);   /* on photo / dark backgrounds */
+  --shimmer-mid-inverse:  var(--gold18k-600);
+  --shimmer-hi-inverse:   var(--gold18k-400);
+  --shimmer-dur: 5.5s;
+  --ring-base: #FFFCF2; --ring-mid: #F6D3DB; --ring-hi: #FFE8EC;   /* pen rings on the sage note */
+
+  /* Decoration */
+  --color-decor-gold: var(--gold18k-600);   /* print gold: ornaments at rest, card frames */
+  --pen-red: #C4687F;    /* the Save-the-date stamp */
+  --color-decor-pen: var(--pen-red);
+  --color-thread: #E3A3B6;       /* stitches holding the calendar to the page */
+  --color-focus: var(--gold-600);
+
+  /* Text shadows on the photo */
+  --shadow-on-photo-soft: 0 1px 8px rgb(255 252 242 / .7);
+  --shadow-text-on-photo: 0 0 10px rgb(255 252 242 / .8);
+
+  /* ---------- Spacing (4px base) ---------- */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-section: 72px;   /* one gap between page sections: text · calendar · events (and between events) · RSVP */
+
+  /* ---------- Radius ---------- */
+  --radius-sm: 8px; --radius-md: 14px; --radius-lg: 22px; --radius-pill: 999px;
+
+  /* ---------- Elevation (warm, paper-like) ---------- */
+  --shadow-card:  0 1px 2px color-mix(in srgb, var(--sand-700) 12%, transparent),
+                  0 6px 14px -4px color-mix(in srgb, var(--sand-700) 14%, transparent),
+                  0 22px 40px -16px color-mix(in srgb, var(--sand-700) 26%, transparent);   /* the invitation card */
+
+  /* ---------- Motion ---------- */
+  --ease-out:    cubic-bezier(.22, 1, .36, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --dur-fast: 160ms; --dur-base: 320ms;
+
+  /* ---------- Layout ---------- */
+  --content-max: 560px;   /* reading column on every screen size */
+}
+
+/* ---------- 3. Event themes ----------
+   data-event="mehendi|baraat|walima" on any container sets --color-event: the title, stamp edge,
+   pencil rule, visual, date and details all take it. */
+[data-event="mehendi"] { --color-event: var(--event-mehendi-ink); }
+[data-event="baraat"]  { --color-event: var(--event-baraat-ink); }
+[data-event="walima"]  { --color-event: var(--event-walima-ink); }
+
+/* PDF palette extras: print gold used on the event pages, sage ink for the cover lettering */
+:root { --print-gold: #C99A5F; --sage-ink: #6E9F95; --cream: #FDF7E4; --mint: #CBDFD3; --blush: #F2BFC4; }

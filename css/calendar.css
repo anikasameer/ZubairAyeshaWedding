@@ -1,0 +1,118 @@
+/* =====================================================================
+   Section 2 — December 2026 calendar on a torn piece of paper, stitched and taped onto the page,
+   with a rubber "Save the dates" stamp and the event dates circled in pen red.
+   Type follows the page: dates and weekdays at Body 2 (14px), the month just above it.
+   ===================================================================== */
+
+/* The page scrolls once it is open: the calendar follows section 1 */
+html.is-scrollable .page { pointer-events: auto; overflow-y: auto; overscroll-behavior: contain; }
+
+/* A landscape scrap of paper, 40px below section 1 (= the page's top padding) */
+.cal {
+  /* Layout from Figma "Calendar layout reference": a landscape sheet (663 × 448), the month block on the left
+     (fixed 212px, 14px type), open paper on the right where the stamp lands. Scaled 0.61×; on narrow phones the
+     sheet narrows (it may run into the page margin) and only the open right-hand area gives way. */
+  --cw: 180px;                                               /* the calendar itself: one fixed size everywhere */
+  --pw: min(404px, calc(100vw - 32px));                      /* sheet width: 663 × .61 */
+  box-sizing: border-box; position: relative; z-index: 1; width: var(--pw);
+  margin: calc(var(--space-section) + 7px) 0 calc(var(--space-section) + 7px) calc((100% - var(--pw)) / 2);   /* top gap matches the space below the note (tape and stamp included) */
+  padding: 46px 0 36px clamp(28px, calc((var(--pw) - var(--cw)) * .31), 60px);   /* left gap = 31% of the free width, as in Figma */ color: var(--color-text-calendar); rotate: -1.5deg; opacity: 0;
+  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--sand-700) 14%, transparent)) drop-shadow(0 8px 14px color-mix(in srgb, var(--sand-700) 20%, transparent)); }
+.cal > * { position: relative; }
+.cal { --type-h3-size: 20px; }   /* the calendar is one fixed size: month at 20px, grid at 12px (scaled down 0.85×) */
+
+/* Torn edges: a lighter fibre rim (cal__edge) peeks out from under the paper; both outlines are generated in js/calendar.js */
+.cal__edge, .cal__paper { position: absolute !important; inset: 0; }
+.cal__edge { inset: -2px; background: color-mix(in srgb, var(--color-note-paper), var(--sand-25) 28%); }   /* the paper core shows lighter where it tore */
+.cal__paper { background-color: var(--color-note-paper); }
+.cal__paper::before { content: ""; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: soft-light; opacity: .4;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='640'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.011 .014' numOctaves='4' seed='9'/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='2.6'%3E%3CfeDistantLight azimuth='225' elevation='58'/%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23c)'/%3E%3C/svg%3E"), var(--paper-noise);
+  background-size: 100% 100%, 256px; }
+
+/* translucent paper tape with torn zig-zag ends, over the top-right corner */
+.cal__tape { position: absolute !important; top: -8px; width: 160px; height: 36px; z-index: 3;
+  /* printed grid washi tape: dark ink grid (9px cells — the reference grid scaled 1.5×) on translucent paper */
+  --grid: 9px; --grid-ink: color-mix(in srgb, var(--ink-900) 55%, transparent);
+  background:
+    linear-gradient(90deg, var(--grid-ink) 1px, transparent 1px) 3px 0 / var(--grid) var(--grid),
+    linear-gradient(var(--grid-ink) 1px, transparent 1px) 0 3px / var(--grid) var(--grid),
+    var(--color-tape);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--sand-700) 16%, transparent); backdrop-filter: blur(.5px);
+  clip-path: polygon(0 0, 6% 12%, 0 25%, 6% 38%, 0 50%, 6% 62%, 0 75%, 6% 88%, 0 100%, 100% 100%, 94% 88%, 100% 75%, 94% 62%, 100% 50%, 94% 38%, 100% 25%, 94% 12%, 100% 0); }
+.cal__tape--r { right: -26px; rotate: 23.5deg; }   /* Figma: over the top-right corner, 23.5° */
+
+/* Stitches: gold embroidery thread sewn through the paper's top-left corner into the page,
+   and a field of needle-punched holes beside the bottom-left — drawn in js/calendar.js */
+.cal__stitch, .cal__holes { position: absolute !important; overflow: visible; pointer-events: none; z-index: 2; }
+.cal__stitch { left: -34px; top: -26px; width: 112px; height: 84px; }
+.cal__holes  { left: -30px; bottom: -22px; width: 84px; height: 48px; }
+.cal__thread { fill: none; stroke: var(--color-thread); stroke-width: 2.4; stroke-linecap: round; }
+.cal__thread--twist { stroke: color-mix(in srgb, var(--color-thread), #fff 45%); stroke-width: .9; stroke-dasharray: 1.6 1.8; opacity: .8; }   /* the twist of the floss */
+.cal__needle-hole { fill: color-mix(in srgb, var(--sand-700) 70%, transparent); }
+.cal__punch { fill: color-mix(in srgb, var(--sand-700) 45%, transparent); }
+
+/* Heading + pencil rule */
+.cal__head, .cal__board { width: var(--cw); }
+.cal__add { margin: var(--space-3) 0 0 calc(-1 * var(--space-4) + 2px); color: var(--color-text-calendar); }   /* tertiary: text + icon, aligned to the grid's left edge */
+/* An engraved scroll frame printed just inside the paper's edge (after the reference stationery): thin double rule
+   with baroque C-scroll flourishes in each corner, in the calendar ink. Drawn to size in js/calendar.js. */
+.cal__frame { position: absolute !important; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; color: color-mix(in srgb, var(--color-note-paper), #10140a 12%); opacity: 1; }   /* blind-embossed like the rose: paper a shade darker, shaded and lit by #calEmboss */
+.cal__frame path, .cal__frame line, .cal__frame circle { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+.cal__frame .leaf { fill: currentColor; stroke: none; }
+.cal__head { padding: 0 0 4px; display: flex; flex-direction: column; align-items: flex-start; }
+.cal__hijri { align-self: stretch; text-align: right; margin: -2px 0 0; font-family: var(--font-urdu); font-size: 14px; line-height: 1.4; color: var(--color-text-weekend); }   /* Hijri year, in the Urdu typeface, under the month, right-aligned to the grid's edge */   /* month sits close to the grid */
+.cal__grid .cal__rule--pencil { margin: 0 0 4px; }
+.cal__month { margin: 0; color: var(--color-text-calendar); }   /* H3 token, held at its phone size (below) so the note never scales */
+.cal__rule--pencil { height: 6px; border: 0; opacity: 1;   /* one hand-ruled pencil line: slightly uneven, grainy graphite */
+  background: no-repeat center / 100% 6px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='6' viewBox='0 0 600 6' preserveAspectRatio='none'%3E%3Cfilter id='p' x='0' y='-1' width='1' height='3'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8 .4' numOctaves='2' seed='3'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='1.8'/%3E%3C/filter%3E%3Cpath d='M2 3.2 Q150 2.6 300 3 T598 2.8' fill='none' stroke='%23DDEBE4' stroke-width='1.2' stroke-linecap='round' opacity='1' filter='url(%23p)'/%3E%3C/svg%3E"); }
+
+/* The month: dates and weekdays both at Body 2 (14px), like the text above */
+.cal__board { position: relative; padding: 6px 0 2px; }
+.cal__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.cal__dow { text-align: center; font-family: var(--font-display); font-weight: 400; font-size: var(--type-caption-size); line-height: var(--type-caption2-lh);
+  padding: 2px 0 0; color: var(--color-text-calendar); }
+.cal__day { position: relative; display: flex; align-items: center; justify-content: center; height: 22px; }
+.cal__num { font-family: var(--font-display); font-size: var(--type-caption-size); line-height: 1; color: var(--color-text-calendar); }
+.cal__dow--weekend, .cal__day--weekend .cal__num { color: var(--color-text-weekend); font-weight: 700; }   /* weekend column: heavier */
+
+/* Hand-drawn sharpie rings */
+.cal__ink { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.cal__ring { fill: none; stroke: url(#ringGold);   /* 18k gold with the shared glint sweep (gradient built in calendar.js) */ stroke-linecap: round; stroke-linejoin: round; }
+.cal__ring--bristle { opacity: .45; }
+
+/* Rubber stamp, pressed half over the bottom-right edge of the paper */
+.cal__stamp { position: absolute; left: 7%; top: -74px;   /* above the note's top-left corner, its lower part tucked behind the paper */
+  width: 92px; height: 92px; rotate: -14deg; z-index: -1;
+  background: var(--color-decor-pen); opacity: 0;   /* Baraat red */
+  -webkit-mask: url("../img/stamp-save-the-date-v2.png") center / contain no-repeat; mask: url("../img/stamp-save-the-date-v2.png") center / contain no-repeat; }   /* artwork from Figma, inked in pen red */
+
+/* Rose motif blind-debossed into the empty space beside the grid (after the inlaid frame reference):
+   a shade darker than the paper, a soft shadow inside the top edges, a faint lit lip along the bottom. */
+.cal__motif { --free: calc(var(--pw) - var(--cw) - clamp(28px, calc((var(--pw) - var(--cw)) * .31), 60px));   /* the empty strip right of the grid */
+  --mw: min(calc(var(--pw) * .21), calc(var(--free) * .62));
+  position: absolute !important; right: calc((var(--free) + 15px - var(--mw)) / 2); top: 96px;   /* centred between the grid's right edge and the frame's inner line (15px in from the paper edge) */
+  width: var(--mw); height: auto; overflow: visible; pointer-events: none; }   /* no z-index: stays under the grid and the pen rings */
+.cal__motif path { fill: color-mix(in srgb, var(--color-note-paper), #10140a 12%); }
+
+/* Phones: the note bleeds off the left edge of the screen and widens; its right edge lines up with the page margin.
+   Inside, three equal gaps: screen edge → calendar → rose → the frame's inner line (15px in from the paper edge). */
+@media (max-width: 599px) {
+  .cal { --bleed: 0px; --pw: calc(100vw - 32px); 
+    --mw: min(84px, 21vw); --g: calc((var(--pw) - 15px - var(--cw) - var(--mw)) / 3);
+    margin-left: -12px; margin-right: 0; padding-left: var(--g); }
+  .cal__motif { --mw: min(84px, 21vw); right: calc(15px + var(--g)); }
+  .cal__stamp { left: 8%; }
+  .cal__add { margin-left: -4px; }
+}
+
+/* "Add to calendar" sits on the deep green paper: its gold label uses the light (inverse) gold palette */
+.cal__add { --sh-base: #FFFCF2; --sh-mid: #F6D3DB; --sh-hi: #FFE8EC; --sh-glint: #FFFFFF; }
+
+/* circled dates are tappable: they open the event below (no hover styling) */
+.cal__num--link { all: unset; position: relative; cursor: pointer; -webkit-tap-highlight-color: transparent; font: inherit; color: inherit; }
+.cal__num--link::after { content: ""; position: absolute; inset: -12px -10px; }   /* a finger-sized target around the digits */
+.cal__num--link:focus-visible { outline: 2px solid var(--gold18k-400); outline-offset: 4px; border-radius: 50%; }
+.cal__stamp { will-change: transform, opacity; }   /* its own layer: the thump plays smoothly even while the page is busy (iPhone) */
+
+/* no stamp, no tape: the note sits clean on the page */
+.cal__stamp, .cal__tape { display: none !important; }

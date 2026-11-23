@@ -1,0 +1,110 @@
+/* =====================================================================
+   Stage 2 — the card opens out and becomes the page.
+   The sheet is the card's paper grown to fill the viewport (clip-path, so the texture never stretches);
+   the intro text moves from the card to the top of the page (FLIP); then the Urdu name fades in.
+   ===================================================================== */
+
+.page-sheet { position: fixed; inset: 0; z-index: 20; visibility: hidden; pointer-events: none; }
+.page-sheet.is-on { visibility: visible; }
+.page-sheet__rule, .page-sheet__divider { position: absolute; pointer-events: none; }         /* card details, placed over the card then faded */
+.page-sheet__rule { color: color-mix(in srgb, var(--card-paper), #4a3a1c 16%); opacity: .9; }   /* a copy of the card's inlaid frame, faded as the sheet grows */
+.page-sheet__divider { display: flex; }
+.page-sheet__divider > .ornament { width: 100%; margin: 0; }   /* clone of the card ornament; font-size set from the card scale in JS */
+
+.page { position: fixed; inset: 0; z-index: 21; padding: 96px var(--space-8) calc(80px + env(safe-area-inset-bottom)); pointer-events: none; }   /* 96px above the first line of text; 88px below the last ("Open envelope again", whose button box adds 8px under its label) */
+.page[hidden] { display: block; visibility: hidden; }
+
+.page__head  { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); width: min(var(--content-max), 100%); margin: 0 auto; }   /* same centred column as the calendar and events */   /* text, then RSVP below it */
+.page__intro { flex: none; width: 100%; min-width: 0; text-align: left; }   /* up to 700px wide, so larger screens read in fewer lines; words reflow from the card */
+.page__rsvp-wrap { position: relative; margin-top: var(--space-section); display: flex; flex-direction: column; align-items: center; gap: var(--space-4); opacity: 0; }   /* RSVP, then "Open envelope again"; fades in as one */
+.page__replay { position: relative; z-index: 1; pointer-events: auto; }
+.page__rsvp  { position: relative; z-index: 1; pointer-events: auto; justify-content: center; }   /* full-width secondary button at the end of the page */   /* secondary button; fades in after the text arrives */
+.page__ornament { width: 100%; margin: var(--space-10) 0 0; font-size: 16px; gap: .5em; transform-origin: 50% 50%; }   /* the card's ornament divider, kept on the page, full width inside the page margins */
+.page__ornament svg { width: 1em; height: 1em; }
+.page__line  { color: var(--color-text-card); font-weight: 400; transform-origin: 0 0; text-wrap: balance; }   /* balanced like the card, so lines wrap identically */
+.page__names { color: var(--color-text-card-accent); font-weight: 600; margin: var(--space-2) 0; width: fit-content; transform-origin: 0 0; }
+.page .w { display: inline-block; transform-origin: 50% 50%; }   /* words move individually during the card → page transition */
+.page__with  { color: var(--color-text-card); font-weight: 400; }
+
+.page__urdu { --uw: min(100vw, 760px); --uh: calc(var(--uw) * .3115);   /* artwork is 1390 × 433 */
+  position: relative; z-index: 0; width: var(--uw); rotate: -2deg; opacity: 0; pointer-events: none;
+  margin: calc(var(--space-10) - var(--uh) * .1) 0 calc(var(--uh) * -.18 - var(--space-section) - 7px) calc(50% - var(--uw) / 2); }
+  /* in the page flow, edge to edge: its top tucks under the last lines of text, and the calendar note overlaps its foot */
+#cal { position: relative; z-index: 1; }   /* the note sits over the calligraphy */
+.page__urdu-art { display: block; width: 100%; height: auto; overflow: visible; }
+.page__urdu-ink { fill: var(--color-deboss); }   /* one shade darker than the paper; grain comes from the SVG filter */
+.page__urdu-full { opacity: 0; }   /* the complete artwork, faded in after the pen pass so every brush hair is there */
+.page__urdu-pen path { stroke-dasharray: 1 1; stroke-dashoffset: 1; opacity: 0; }   /* pen strokes that reveal the letters, right to left */
+.page { overflow-x: clip; }
+
+html.is-scrollable, html.is-scrollable body { overflow: auto; }
+
+/* ---------- Leaf shadows & drifting sunlight (js/shadows.js) — above everything, never blocks taps ---------- */
+.leaf-shadows, .leaf-light { position: fixed; inset: 0; z-index: 1000; pointer-events: none; opacity: 0; }   /* faded in by js/shadows.js (12s) */
+.leaf-shadows { overflow: hidden; mix-blend-mode: multiply; }
+.leaf-shadows__branch { position: absolute; width: 0; height: 0; }
+.leaf-shadows__gust, .leaf-shadows canvas { position: absolute; }
+.leaf-light { mix-blend-mode: soft-light; overflow: hidden; }
+.leaf-light__glow { position: absolute; inset: -20%;
+  background: radial-gradient(60% 50% at 30% 25%, rgb(255 244 222 / .9), rgb(255 244 222 / 0) 70%),
+              radial-gradient(45% 40% at 80% 70%, rgb(255 236 205 / .6), rgb(255 236 205 / 0) 70%); }
+
+/* ---------- Section 3: the events, as stamp cards (all open) ---------- */
+.events { opacity: 0; position: relative; z-index: 1; width: min(var(--content-max), 100%); margin: 0 auto; color: var(--color-text-card); }
+.events__divider { width: 100%; margin: 0 0 var(--space-section); font-size: 16px; gap: .5em; }   /* same ornament divider as above the page text, full width of the section */   /* 10px (not 16): the first title sits low in its row (baseline-aligned with the taller Urdu), so this evens the space above and below the list */
+.events__divider--end { margin: var(--space-section) 0 0; }   /* closes the event list */
+.events__divider svg { width: 1em; height: 1em; }
+
+html.is-page .events, html.is-page .cal, html.is-page .page__rsvp-wrap { opacity: 1 !important; }
+html.is-scrollable .page { -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+
+/* The lower-right palm reads messy on narrow phones: hide it below 600px (phones). Fold / tablet / landscape widths keep all three plants. */
+@media (max-width: 599px) { .leaf-shadows__branch--lower { display: none; } }
+
+/* while the event list fades in, hold its shimmers and glass still so every layer fades together (WebKit) */
+.events.is-fading *, .events.is-fading *::before, .events.is-fading *::after { animation: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
+/* Tablet and desktop: the invitation text, including the couple's names, is centred (phones stay left-aligned) */
+
+
+/* The couple's names in the same handwriting as the guest's name (Playwrite BE VLG), in display gold with the glint.
+   Room around each word for Playwrite's tall loops and deep descenders, so the gold (clipped to the letters) is never cut. */
+.invite-card__names > .w, .page__names > .w { font-family: var(--font-names); font-style: italic; font-weight: 400; display: inline-block;
+  padding: .15em .2em .25em; margin: -.15em -.2em -.25em; line-height: 1.2; }
+   /* optical kerning: Playwrite's A carries a wide left bearing, so "with Ayesha" sat looser than "Zubair with" */
+/* on the card the names are written in, left to right, with the same soft-edged pen mask as the guest's name (js/envelope.js) */
+.invite-card__names > .w { -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--sig-p) * 1.08 - 6%), transparent calc(var(--sig-p) * 1.08 + 2%));
+          mask-image: linear-gradient(90deg, #000 calc(var(--sig-p) * 1.08 - 6%), transparent calc(var(--sig-p) * 1.08 + 2%)); }
+.page__names + .page__line { padding-top: 2px; }   /* room under the handwritten names: the y of Ayesha dips below its line */
+
+/* ---------- PDF theme: the cover frame, florals and calligraphy ---------- */
+/* The page sheet is the invitation's cover: cream paper, a mint wash round the edge, pink and sage florals in the corners */
+.page-sheet { --corner: clamp(150px, 42vw, 300px); }
+.page-sheet::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    url("../img/cover/c1.webp") left -14px top -10px / var(--corner) auto no-repeat,
+    url("../img/cover/c7.webp") right -14px bottom -10px / var(--corner) auto no-repeat,
+    radial-gradient(130% 110% at 50% 50%, transparent 62%, rgb(203 223 211 / .75) 100%); }
+.page__bismillah { display: block; width: min(300px, 70%); height: auto; margin: 0 auto var(--space-4); }
+.page__sub { margin: var(--space-3) 0 0; color: var(--sage-ink); text-align: center; width: 100%; }
+.page__urdu-ink { fill: #F3E6D3; }
+
+/* invitation card (inside the envelope): the cover frame in miniature */
+.invite-card { box-shadow: var(--shadow-card), inset 0 0 0 6px #D7E6DB, inset 0 0 0 7px #EFB9BF; }
+.invite-card::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: url("../img/cover/c1.webp") left -4px top -4px / 70px auto no-repeat, url("../img/cover/c7.webp") right -4px bottom -4px / 70px auto no-repeat; }
+.invite-card__rule { display: none; }
+.page-sheet__rule { display: none; }
+.page__bismillah { opacity: 0; transition: opacity 1.4s ease .6s; }
+html.is-page .page__bismillah { opacity: 1; }
+@media (min-width: 600px) { .page__bismillah { margin-inline: auto; } }
+
+/* all sizes: centred invitation text */
+.page__head { align-items: center; }
+.page__intro, .page__intro .page__line { text-align: center; }
+.page__names { margin-inline: auto; text-align: center; transform-origin: 50% 0; }
+
+/* larger invitation text on the page */
+.page__line { font-size: 21px !important; line-height: 30px !important; }
+.page__names { font-size: clamp(40px, 11.5vw, 56px) !important; line-height: 1.1 !important; }
+.page__with { font-size: .55em; }

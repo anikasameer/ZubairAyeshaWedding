@@ -1,0 +1,49 @@
+/* =====================================================================
+   Events — one compact card per celebration, in the colours of that page of the invitation
+   (sage Mehendi, rose Baraat, teal Walima). Normal flow, no text over artwork, so nothing overlaps on a phone.
+   ===================================================================== */
+.event-list { position: relative; z-index: 1; display: flex; flex-direction: column; gap: var(--space-8); }
+.event { --ink: var(--color-event); --banner-ink: #FBEFD6; --wash-a: #AAB57C; --wash-b: #8E9E62; --tint: #F6F0DC; }
+.event[data-event="mehendi"] { --banner-ink: #F4ECBA; --wash-a: #A9B67C; --wash-b: #8A9B5E; --tint: #F7F1DB; --ink: #3F6B5E; }
+.event[data-event="baraat"]  { --banner-ink: #FBEBD5; --wash-a: #D58085; --wash-b: #B8484F; --tint: #FAEDE3; --ink: #6E1A30; }
+.event[data-event="walima"]  { --banner-ink: #FDF2D8; --wash-a: #A6D0C6; --wash-b: #78B0A4; --tint: #F1F4E6; --ink: #0F4450; }
+
+.ev-card { container-type: inline-size; position: relative; overflow: clip; border-radius: 18px; color: var(--ink);
+  background: linear-gradient(var(--tint), var(--tint)), var(--card-paper); box-shadow: 0 1px 2px rgb(107 85 96 / .14), 0 14px 30px -16px rgb(107 85 96 / .45); }
+.ev-card img { display: block; max-width: none; }
+
+.ev-head { position: relative; display: grid; place-items: center; padding: 9cqw 0 9cqw; background: linear-gradient(160deg, var(--wash-a), var(--wash-b)); isolation: isolate; }
+.ev-head::after { content: ""; position: absolute; inset: auto 0 0 0; height: 14px; background: var(--tint); border-radius: 14px 14px 0 0; }   /* soft lip where the head meets the body */
+.ev-c { position: absolute; top: 0; height: auto; width: 24cqw; z-index: -1; pointer-events: none; }
+.ev-tl { left: 0; } .ev-tr { right: 0; }
+.ev-banner { position: relative; width: 80cqw; }
+.ev-banner > img { width: 100%; height: auto; }
+.ev-title { position: absolute; inset: 0; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 3cqw; color: var(--banner-ink); text-align: center; }
+.ev-title__en { font-family: var(--font-script); font-weight: 400; font-size: clamp(30px, var(--title-size, 11.5cqw), 52px); line-height: 1.05; white-space: nowrap; }
+.event[data-event="mehendi"] { --title-size: 9.4cqw; }
+.ev-title__ur { font-family: var(--font-urdu); font-weight: 700; font-size: clamp(15px, 4.4cqw, 22px); line-height: 1.2; opacity: .92; }
+
+.ev-main { display: flex; flex-direction: column; gap: 16px; padding: 4px 22px 22px; }
+.ev-tag { margin: 0; font-family: var(--font-body); font-style: italic; font-weight: 500; font-size: 19px; line-height: 1.35; text-align: center; text-wrap: balance; }
+.ev-details { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid color-mix(in srgb, var(--ink) 22%, transparent); }
+.ev-details li { display: grid; grid-template-columns: 22px minmax(0, 1fr); column-gap: 14px; align-items: start; padding: 12px 0; border-bottom: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); font-family: var(--font-body); font-weight: 600; font-size: 19px; line-height: 1.3; }
+.ev-details li > span:last-child { min-width: 0; overflow-wrap: break-word; }
+.ev-ic { display: block; width: 22px; height: 22px; margin-top: 2px; background: var(--ink); -webkit-mask: var(--ic) center / contain no-repeat; mask: var(--ic) center / contain no-repeat; }
+.ev-ic--cal { --ic: url("../img/ev/ic-cal.png"); } .ev-ic--clock { --ic: url("../img/ev/ic-clock.png"); } .ev-ic--pin { --ic: url("../img/ev/ic-pin.png"); }
+.ev-dress small { display: block; font-family: var(--font-caps); font-weight: 400; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; opacity: .75; margin-bottom: 2px; }
+.ev-dress span:last-child { font-weight: 500; font-size: 17px; }
+
+.ev-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.ev-count { font-family: var(--font-caps); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
+.ev-directions { margin-left: auto; --sh-base: var(--ink); --sh-mid: var(--ink); --sh-hi: var(--ink); --sh-glint: var(--ink); }
+.ev-directions .ev-ic { width: 14px; height: 14px; margin: 0 6px 0 0; margin-top: -2px; }
+.event .btn--secondary { color: var(--ink); }
+
+.events__divider { --sh-base: #A9763A; --sh-mid: var(--print-gold); --sh-hi: #E7C48E; --sh-glint: #FFF3D6; }
+.ev-head { display: flex; flex-direction: column; align-items: center; gap: 1cqw; padding-bottom: 11cqw; }
+.ev-ur { margin: 0; position: relative; z-index: 1; color: var(--banner-ink); font-family: var(--font-urdu); font-weight: 700; font-size: clamp(17px, 5cqw, 24px); line-height: 1.3; }
+
+/* ---- Canva-inspired touches: pink label banners + peony / gold-scroll embellishments ---- */
+.events { position: relative; }
+.events > * { position: relative; z-index: 1; }
+.ev-sub { display: block; font-style: italic; font-weight: 500; font-size: 15px; line-height: 1.3; opacity: .85; margin-top: 2px; }

@@ -1,0 +1,95 @@
+/* RSVP form — a sheet of the card's ivory paper that rises over the page. Tokens and components from the design system. */
+.rsvp [hidden] { display: none !important; }
+.rsvp { position: fixed; inset: 0; z-index: 90; display: grid; align-items: end; justify-items: center; }
+.rsvp[hidden] { display: none; }
+.rsvp__scrim { position: absolute; inset: 0; background: var(--color-surface-overlay); opacity: 0; transition: opacity .32s ease; }
+.rsvp__sheet { position: relative; width: min(var(--content-max), 100%); height: auto; max-height: 100vh; max-height: 100dvh; overflow-y: auto; overscroll-behavior: contain;   /* hugs its content; grows to full screen, then scrolls */
+  background: var(--card-paper, var(--sand-25)); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: 0 -8px 32px rgb(42 34 29 / .18);
+  padding: var(--space-10) var(--space-8) calc(var(--space-8) + env(safe-area-inset-bottom));
+  translate: 0 100%; transition: translate .46s cubic-bezier(.22,1,.36,1); }   /* phones: slides up from the bottom edge */
+/* paper texture painted on the sheet itself and scrolling with it, so it covers the whole length of the form (no plain colour on scroll) */
+.rsvp { --rsvp-paper: linear-gradient(color-mix(in srgb, var(--card-paper) 80%, transparent), color-mix(in srgb, var(--card-paper) 80%, transparent)), var(--paper-noise), var(--card-paper); }
+.rsvp__sheet { background: var(--rsvp-paper); background-attachment: local; }
+.rsvp.is-in .rsvp__scrim { opacity: 1; }
+.rsvp.is-in .rsvp__sheet { translate: 0 0; opacity: 1; }
+.rsvp__scrim { transition-duration: .4s; }
+.rsvp__sheet { padding-top: max(var(--space-10), calc(env(safe-area-inset-top) + var(--space-6))); }   /* clear the notch when it reaches full height */
+@media (prefers-reduced-motion: reduce) { .rsvp__scrim, .rsvp__sheet { transition: none; } }
+html.rsvp-open, html.rsvp-open body, html.rsvp-open .page { overflow: hidden !important; }
+
+.rsvp__close { position: absolute; top: var(--space-2); right: var(--space-2); z-index: 3; }   /* large icon button: 48px, 24px icon */
+.rsvp__view { position: relative; display: flex; flex-direction: column; gap: var(--space-5); outline: none; }
+.rsvp__view[hidden] { display: none; }
+.rsvp__divider { width: 100%; font-size: 14px; }
+.rsvp__title { color: var(--color-text-primary); margin: 0; }
+.rsvp__guest { margin: 0; color: var(--gold18k-600); min-height: 1em; }   /* handwritten name, same pen as the envelope */
+.rsvp__guest .signature { margin-inline: -.25em 0; }   /* cancel the reveal padding so the first letter lines up with the text below */
+.rsvp__intro { color: var(--color-text-secondary); margin: 0; }
+.rsvp__hint { color: var(--color-text-muted); }
+
+/* events: checkbox rows from the design system */
+.rsvp__events { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rsvp__legend { padding: 0; margin-bottom: var(--space-2); color: var(--color-text-muted); }
+
+/* even rhythm between the form's sections (switch · name · I'll be joining · guests): the last event row drops its
+   bottom padding and the first count row sits at the top of its box, so each section starts the same 20px after the one before */
+.rsvp__events .check-row:last-child { padding-bottom: 0; min-height: 0; }
+/* the same 16px from a section's label to its content: "Your name" → field, "I'll be joining" → first checkbox */
+#rsvpForm .field { gap: var(--space-4); }
+.rsvp__legend { margin-bottom: var(--space-2) !important; }   /* the checkbox (centred on its row) then sits 16px under the label */
+.rsvp__events .check-row:first-of-type { padding-top: 0; min-height: 0; }
+.rsvp__count:first-child { min-height: 0; padding-bottom: var(--space-3); }
+
+/* counts */
+.rsvp__counts { display: flex; flex-direction: column; }
+.rsvp__counts[hidden] { display: none; }
+.rsvp__count { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 64px; }
+.rsvp__count + .rsvp__count { border-top: 1px solid var(--color-rule); }
+.rsvp__count-text { display: flex; flex-direction: column; gap: 2px; color: var(--color-text-primary); }
+
+.rsvp__regret { color: var(--color-text-secondary); margin: 0; }
+.rsvp__error { color: #A3362C; margin: 0; }
+.rsvp__saved { color: var(--color-text-muted); text-align: center; margin: 0; }
+.rsvp__submit { margin-top: var(--space-2); }
+
+/* thank-you view */
+.rsvp__summary { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rsvp__summary li { display: flex; justify-content: space-between; gap: var(--space-4); padding: var(--space-3) 0; color: var(--color-text-primary); }
+.rsvp__summary li + li { border-top: 1px solid var(--color-rule); }
+.rsvp__summary:empty { display: none; }
+.rsvp__cal { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-5); border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--gold18k-200) 22%, transparent); border: 1px solid color-mix(in srgb, var(--gold18k-400) 30%, transparent); }
+.rsvp__cal[hidden] { display: none; }
+.rsvp__cal p { margin: 0; color: var(--color-text-primary); }
+.rsvp__cal-actions { display: flex; flex-direction: column; gap: var(--space-2); }
+.rsvp__edit { align-self: center; }
+.rsvp__view { margin-top: var(--space-6); }   /* clear room under the close button */
+
+/* calendar chooser (reuses the RSVP sheet) */
+.addcal { z-index: 95; }
+.addcal__options { display: flex; flex-direction: column; gap: var(--space-3); }
+.addcal__list li { align-items: center; }
+.addcal__back { align-self: flex-start; margin-left: calc(-1 * var(--space-3)); }
+
+/* the view is split in three: head (name, title, divider) · body (the questions) · actions (send, notes).
+   Phones: one column that scrolls as a whole inside the bottom sheet. */
+.rsvp__head, .rsvp__body { display: flex; flex-direction: column; gap: var(--space-5); }
+#rsvpForm .rsvp__body { gap: 48px; }   /* the form's sections (switch · name · I'll be joining · guests) clearly apart */
+.rsvp__actions { display: flex; flex-direction: column; gap: var(--space-3); padding-bottom: var(--space-4); }
+
+/* Tablet and desktop: a side panel that slides in from the right, full height. The head stays at the top and the actions
+   bar at the bottom; only the body scrolls, when it needs to. */
+@media (min-width: 600px) {
+  .rsvp { align-items: stretch; justify-items: end; }
+  .rsvp__sheet { width: min(480px, 100%); height: 100vh; height: 100dvh; max-height: none; padding: 0; overflow: hidden;
+    display: flex; flex-direction: column; border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+    box-shadow: -12px 0 40px rgb(42 34 29 / .18); translate: 100% 0; opacity: 1; transition: translate .46s cubic-bezier(.22,1,.36,1); }
+  .rsvp.is-in .rsvp__sheet { translate: 0 0; }
+  .rsvp__view { flex: 1; min-height: 0; margin-top: 0; gap: 0; }
+  .rsvp__head { flex: none; padding: max(var(--space-10), calc(env(safe-area-inset-top) + var(--space-8))) var(--space-8) var(--space-5); }
+  .rsvp__body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--space-2) var(--space-8) var(--space-6); }
+  .rsvp__actions { flex: none; padding: var(--space-5) var(--space-8) calc(var(--space-8) + env(safe-area-inset-bottom)); border-top: 1px solid var(--color-rule); }
+  .rsvp__actions:empty { display: none; }
+}
+.rsvp__guest-line { display: block; }   /* one handwritten line per row; words wrap as whole words */

@@ -1,0 +1,285 @@
+/* =====================================================================
+   First view — blurred desert, ivory envelope, wax seal, invitation card.
+   Animation is driven by js/envelope.js (Web Animations API, no library).
+   Stacking (inside .stage, no stacking context on .env so layers interleave):
+     back 1 · card 2 · pocket 3 · flap 4 · seal 5 · card (forward) 10
+   ===================================================================== */
+
+/* ---------- Stage ---------- */
+.stage { position: fixed; inset: 0; overflow: hidden; background: #CBDFD3; }
+/* Background = the real photo + a live layer blur (like Figma's Layer blur 15).
+   The 4.9 KB pre-blurred image sits underneath as an instant placeholder. */
+:root { --bg-blur: 8px; --bg-zoom: 1.12; }
+.stage__bg { position: absolute; inset: 0; overflow: hidden; background: #CBDFD3 url("../img/stage-blur.webp") 50% 50% / cover no-repeat; }
+.stage__bg img { position: absolute; inset: calc(var(--bg-blur) * -3); width: calc(100% + var(--bg-blur) * 6); height: calc(100% + var(--bg-blur) * 6); max-width: none;
+  object-fit: cover; object-position: 50% 50%; filter: blur(var(--bg-blur)); transform: scale(var(--bg-zoom)); transform-origin: 50% 50%;
+  opacity: 0; transition: opacity 600ms var(--ease-out); }
+.stage__bg img.is-loaded { opacity: 1; }
+.stage__bg::after { content: ""; position: absolute; inset: 0;  /* soft vignette for legibility */
+  background: radial-gradient(120% 80% at 50% 62%, transparent 40%, rgb(95 147 138 / .16)); }
+
+
+/* ---------- Envelope ---------- */
+.env {
+  --w: clamp(260px, min(94vw, 58vh), 720px);   /* sized by height on wide screens */
+  position: absolute; left: 50%; top: 60%; width: var(--w); aspect-ratio: 1.434;
+  margin: calc(var(--w) / -2.868) 0 0 calc(var(--w) / -2);   /* centred without transform: keeps layers interleaving with the card */
+}
+.env > * { position: absolute; inset: 0; border-radius: 4px; }
+.env__shadow { box-shadow: 0 22px 40px -18px rgb(70 60 70 / .45), 0 2px 6px rgb(70 60 70 / .16); z-index: 0; }
+/* The lining is one continuous sheet across the inside of the envelope: the back panel (seen through the V)
+   and the underside of the flap. Both read from the same virtual panel (flap height above the fold + full back),
+   so the photo lines up across the fold. --env-h = envelope height. */
+.env { --env-h: calc(var(--w) / 1.434); --lining: url("../img/stage-portrait.webp"); --lining-tint: linear-gradient(rgb(95 147 138 / .10), rgb(95 147 138 / .10)); }
+.env__back { z-index: 1; background: var(--env-paper-2); }   /* inside of the envelope: paper, with the lining set into it */
+.env__back-liner { position: absolute; top: 0; bottom: 0; left: 6%; right: 6%;   /* = the flap lining's corners (6%), so the two edges meet exactly at the fold */   /* vertical paper margin either side, like a real lined envelope */
+  background: var(--lining-tint), var(--lining) center calc(var(--env-h) * -.6) / auto 160% no-repeat, var(--env-liner); }
+.env__back::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: 1;   /* depth: it's the INSIDE of a pocket */
+  box-shadow: inset 0 14px 22px -6px rgb(40 25 12 / .45), inset 10px 0 18px -10px rgb(40 25 12 / .35), inset -10px 0 18px -10px rgb(40 25 12 / .35); }
+.env__back::after { content: ""; position: absolute; inset: 0; border-radius: inherit; opacity: .25; mix-blend-mode: multiply; background-image: var(--paper-noise); }
+
+/* A soft shadow line along the pocket's V edge, so the opening always reads as an opening */
+.env__pocket-edge { z-index: 3; background: rgb(50 32 16 / .2); filter: blur(1px);
+  clip-path: polygon(0 -1%, 50% 52.9%, 100% -1%, 100% 100%, 0 100%); }
+.env__pocket { z-index: 3; background: var(--env-paper); clip-path: polygon(0 0, 50% 54%, 100% 0, 100% 100%, 0 100%); }
+.env__pocket::before { content: ""; position: absolute; inset: 0; border-radius: inherit; opacity: .22; mix-blend-mode: multiply; background-image: var(--paper-noise); }
+.env__pocket::after { /* bottom folds: hairlines from each bottom corner to the centre */
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(to top left,  transparent calc(50% - .6px), rgb(90 70 50 / .14) 50%, transparent calc(50% + .6px)) left 0 top 54% / 50% 46% no-repeat,
+    linear-gradient(to top right, transparent calc(50% - .6px), rgb(90 70 50 / .14) 50%, transparent calc(50% + .6px)) right 0 top 54% / 50% 46% no-repeat,
+    linear-gradient(to top, rgb(255 255 255 / .25), transparent 40%); }
+
+.env__flap-wrap { z-index: 4; filter: drop-shadow(0 1.5px 1.5px rgb(70 50 30 / .18)); }
+.env__flap { position: absolute; inset: 0; transform-origin: 50% 0; background: linear-gradient(180deg, #FBF0EA, var(--env-paper));
+  clip-path: polygon(0 0, 100% 0, 50% 60%); }
+.env__flap::before { content: ""; position: absolute; inset: 0; opacity: .22; mix-blend-mode: multiply; background-image: var(--paper-noise); }
+
+/* Flap lining: inset inside the flap triangle with a beige paper border, and continues the same photo as the back panel.
+   Pre-flipped so it reads upright once the flap has folded back. */
+.env__liner { position: absolute; inset: 0; clip-path: polygon(6% 0, 94% 0, 52% 50.3%, 50% 52.2%, 48% 50.3%);   /* even paper border along both edges, softened tip */ opacity: 0;   /* inset: a beige paper border frames the lining, like a real lined envelope */
+  filter: drop-shadow(0 0 1px rgb(60 40 20 / .25)); }
+.env__flap.is-lined .env__liner { opacity: 1; }
+.env__liner-img { position: absolute; inset: 0; transform: scaleY(-1);
+  background: var(--lining-tint), var(--lining) center calc(var(--env-h) * .4) / auto 160% no-repeat, var(--env-liner); }
+
+/* Fold line where the flap turned: a thin paper edge along the top of the opened envelope */
+.env__fold { z-index: 1; inset: 0 0 auto 0; height: 0; border-radius: 0; opacity: 0; transition: opacity .2s; }
+.env__fold::before { content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 2px;
+  background: color-mix(in srgb, var(--env-paper), #fffdf8 60%); }   /* just a 2px paper edge: no bar, no shadow */
+.stage.is-open .env__fold { opacity: 1; transition-delay: var(--fold-delay, 950ms); }   /* appears as the flap passes upright */
+
+.env__seal { inset: auto; left: 50%; top: 58%; translate: -50% -50%; z-index: 5; border-radius: 0; }
+.env__seal { width: calc(var(--w) * .2); aspect-ratio: 1; }
+/* A dried rose tucked under the wax seal (pressed-flower stationery): the seal pins the stem just below the leaves,
+   the bloom leans up and right across the flap, the cut stem runs out below. Leaves with the seal when it breaks. */
+.env__rose { inset: auto; left: 50%; top: 58%; z-index: 5; border-radius: 0; width: calc(var(--w) * .47); height: auto; max-width: none;
+  translate: -43% -74%; transform-origin: 43% 74%; rotate: 29deg; pointer-events: none;
+  /* three shadows so the dried stems and leaves sit up off the paper: tight contact, a mid shadow, a soft far one.
+     Offsets are written in the image's own (rotated 29°) space so on screen they all fall down-right, away from the light. */
+  filter: drop-shadow(1.6px .8px .5px rgb(45 28 16 / .42)) drop-shadow(4.2px 3.4px 2.5px rgb(45 28 16 / .26)) drop-shadow(10px 8px 9px rgb(45 28 16 / .18)); }
+
+/* ---------- Wax seal (after the CodePen reference: flat wax, thick edge, pressed ring, carved letters) ---------- */
+.wax { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 6px 12px rgb(40 10 12 / .12)); }   /* the close shadows are drawn in the SVG */
+.wax__press-lip { fill: #fff; opacity: .2; filter: blur(2px); }   /* paper ridge raised by the pressing, catching the light */
+.wax__press { fill: rgb(70 45 30 / .14); filter: blur(2.6px); }   /* the shallow dent in the paper around the seal */
+.wax__cast  { fill: rgb(40 10 12 / .2); filter: blur(3.5px); }    /* the seal's cast shadow, falling down-right */
+.wax__contact { fill: rgb(35 8 12 / .55); filter: blur(.7px); }   /* tight shadow where the wax meets the paper: reads as stuck on */
+.wax__mark-text { font-family: var(--font-caps); font-weight: 700; font-size: 30px; letter-spacing: .5px; }
+.wax__mark-face { fill: color-mix(in srgb, var(--wax) 82%, var(--wax-lip)); }   /* letter tops catch a little more light than the well */
+.wax__mark-edge-dark  { fill: var(--wax-depth); opacity: .9; }
+.wax__mark-edge-light { fill: color-mix(in srgb, var(--wax-lip) 60%, #fff); opacity: .6; }
+.wax__shade { mix-blend-mode: multiply; opacity: .6; }   /* diffuse light: shades the rim, the well walls and the letters */
+.wax__gloss { mix-blend-mode: screen; opacity: .8; }     /* specular: wet-looking shine on the rim and letter edges */
+.wax__grain { mix-blend-mode: overlay; opacity: .35; }    /* fine wax texture */
+.wax__glint { fill: #fff; opacity: .5; filter: blur(1px); }
+.wax__glint--soft { opacity: .25; }
+
+/* ---------- Prompt ---------- */
+.env { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.stage.is-open .env { cursor: default; }
+.stage__prompt { position: absolute; left: 0; right: 0; top: 0; z-index: 6;   /* top is set under the envelope by JS */
+  display: flex; flex-direction: column; align-items: center; text-align: center; }
+/* Gold-200 text with a layered onyx/ink drop shadow for contrast on the photo (no halo) */
+.stage__name { color: var(--color-text-on-photo); text-shadow: var(--shadow-text-on-photo); }
+.stage__open { text-shadow: var(--shadow-on-photo-soft); filter: drop-shadow(0 2px 8px rgb(42 34 29 / .11)); }   /* DS small inverse secondary button; soft shadow keeps it legible on the photo */
+.stage__name .signature { margin-inline: auto; overflow: visible; filter: drop-shadow(0 0 6px rgb(255 252 242 / .8));
+  --sh-base: var(--shimmer-base-inverse); --sh-mid: var(--shimmer-mid-inverse); --sh-hi: var(--shimmer-hi-inverse); --sh-glint: #FFFFFF; }   /* light gold on the photo */
+.stage__name { padding: 0 var(--space-6); margin: 0 0 var(--space-4); color: var(--color-text-on-photo-accent); text-shadow: var(--shadow-text-on-photo); }   /* 16px gap above the Open invite button */
+
+/* ---------- Invitation card ---------- */
+.invite-card {
+  position: absolute; left: 0; top: 0; z-index: 2;
+  /* Built at the Figma size (274px) and scaled with the envelope by JS (72% of its width),
+     so card and envelope keep the same proportions on every screen. Type follows Figma:
+     10/18 body in sand-700, 24/24 names in gold-600 with a 10px "with". */
+  width: 274px;
+  --type-quote-size: 9px;  --type-quote-lh: 15px;   /* scaled down (was 10/18, 24/24) to fit a closing divider */
+  --type-h2-size: 21px;    --type-h2-lh: 22px;
+  padding: 24px 32px 16px;   /* content sits 4px below true centre so it reads as optically centred */
+  min-height: 180px; display: flex; flex-direction: column; justify-content: center;   /* text + closing divider centred vertically; card keeps its size */
+  border-radius: 3px; text-align: center; color: var(--color-text-card);
+  transform-origin: 0 0; will-change: transform;
+  visibility: hidden;   /* JS positions it before showing */
+}
+.invite-card.is-forward { z-index: 10; }
+/* Soft, layered shadow (Letter Testimonials style): visible once the card is out of the envelope,
+   falling onto the envelope and the background */
+.invite-card { box-shadow: var(--shadow-card); }
+.invite-card__rule { position: absolute; inset: 0; pointer-events: none; color: color-mix(in srgb, var(--card-paper), #4a3a1c 16%); }   /* blind inlay, a shade darker than the paper */
+.invite-card__frame, .page-sheet__rule > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.invite-card__frame path, .invite-card__frame line, .invite-card__frame circle,
+.page-sheet__rule path, .page-sheet__rule line, .page-sheet__rule circle { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+.invite-card__frame .leaf, .page-sheet__rule .leaf { fill: currentColor; stroke: none; }
+.invite-card__divider { width: 70px; margin: 0 auto 10px; font-size: 12px; gap: .5em; color: var(--color-decor-gold); }   /* DS ornament divider, sized to the card */
+.invite-card__divider svg { width: 1em; height: 1em; }
+.invite-card__divider--end { margin: 10px auto 0; flex: none; }   /* closing divider below the text */
+.invite-card__line  { font-weight: 400; color: var(--color-text-card); text-wrap: balance; }
+.invite-card__names { font-weight: 600; color: var(--color-text-card-accent); margin: 4px auto; width: fit-content; }
+.invite-card__with  { font-weight: 400; color: var(--color-text-card); }
+
+/* ---------- After opening ---------- */
+.scroll-cue { position: absolute; left: 50%; bottom: max(18px, env(safe-area-inset-bottom)); translate: -50% 0; z-index: 11;
+  display: grid; place-items: center; width: 56px; height: 56px; padding: 0; border: 0; background: none; border-radius: 50%;
+  color: var(--color-text-on-photo-light); opacity: 0; pointer-events: none; text-shadow: var(--shadow-on-photo-soft); cursor: pointer; }
+.is-open .scroll-cue { pointer-events: auto; }   /* tap the arrow to open the page */
+.scroll-cue:focus-visible { outline: 1px solid currentColor; outline-offset: 2px; }
+/* a soft ring that breathes outward behind the arrow, inviting a tap */
+.scroll-cue::before { content: ""; position: absolute; inset: 6px; border-radius: 50%; border: 1px solid currentColor; opacity: 0;
+  animation: cue-ring 2.4s var(--ease-in-out) infinite; }
+.scroll-cue .icon { --icon-size: 40px; animation: cue-drop 2.4s var(--ease-in-out) infinite; }
+/* the chevron drops, fades a little as it travels, then springs back — a clear "this way down" */
+@keyframes cue-drop {
+  0%, 100% { transform: translateY(-2px); opacity: 1; }
+  35%      { transform: translateY(10px); opacity: .55; }
+  45%      { transform: translateY(8px);  opacity: .7; }
+  60%      { transform: translateY(-3px); opacity: 1; }
+}
+@keyframes cue-ring { 0% { transform: scale(.7); opacity: 0; } 30% { opacity: .45; } 100% { transform: scale(1.25); opacity: 0; } }
+.scroll-cue:active { scale: .92; }
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue .icon, .scroll-cue::before { animation: none; }
+}
+
+/* Envelope view only: a soft dark glow behind the guest name and "Open invite" so the light gold reads on the photo */
+.stage__name { position: relative; isolation: isolate; }
+.stage__name::before { content: ""; position: absolute; z-index: -1; inset: -14px -10px; pointer-events: none;
+  background: radial-gradient(closest-side, rgb(255 252 242 / .55), rgb(255 252 242 / .25) 60%, transparent); filter: blur(6px); }   /* halved: a quieter shade behind the name
+.stage__open.btn--inverse.btn--secondary, .stage__name .signature.shimmer-text { --sh-base: var(--gold18k-800); --sh-mid: var(--gold18k-600); --sh-hi: var(--gold18k-400); --sh-glint: #FFFFFF; }   /* paler gold for the name, label and stroke on the photo */
+.stage__open { box-shadow: 0 0 24px 10px rgb(255 252 242 / .35); }   /* outer glow only: an inset tint would paint over the gold label (it is drawn with background-clip) */
+
+/* The rose eases onto the envelope once its image has loaded (js/envelope.js adds .is-in), rather than popping in after it */
+.env__rose { opacity: 0; scale: 1.04; transition: opacity 1100ms cubic-bezier(.45,0,.55,1), scale 1400ms cubic-bezier(.22,1,.36,1); }
+.env__rose.is-in { opacity: 1; scale: 1; }
+.env__rose.is-settled { transition: none; }   /* once it has faded in, the seal-and-rose opening animation runs exactly as before (no transition fighting it) */
+
+/* The shade behind the guest's name and the button's glow fade in together, as the name starts to be written (js/envelope.js adds .is-lit) */
+.stage__name::before { opacity: 0; transition: opacity 1200ms cubic-bezier(.45,0,.55,1); }
+.stage__prompt .stage__open { transition: transform var(--dur-fast) var(--ease-out), box-shadow 1200ms cubic-bezier(.45,0,.55,1), filter 1200ms cubic-bezier(.45,0,.55,1); }
+.stage__prompt:not(.is-lit) .stage__open { box-shadow: 0 0 24px 10px rgb(255 252 242 / 0); filter: none; }
+.stage__prompt.is-lit .stage__name::before { opacity: 1; }
+
+/* ---------- Vintage ivory envelope (desi wedding): aged cream paper, a gold-edged arch flap, gold filigree ---------- */
+:root { --gold-line: #C4994A; --ivory: #F7EDD7; --ivory-deep: #EBD9B4; }
+.env__rose { display: none !important; }
+.env__back { background: linear-gradient(180deg, #E9DCC0, #E2D2B0); }
+.env__pocket { background: radial-gradient(120% 95% at 50% 42%, #FBF3E1 0%, #F5E9CF 55%, #E9D6AE 100%); }
+.env__pocket-edge { background: var(--gold-line); filter: blur(.3px); opacity: .95; clip-path: polygon(0 -1%, 50% 53.8%, 100% -1%, 100% 100%, 0 100%); }
+.env__flap { background: linear-gradient(180deg, #FCF5E4, #F4E7CB);
+  clip-path: polygon(0 0, 100% 0, 97% 9%, 91% 18%, 84% 26%, 77% 33%, 70% 39%, 63% 45%, 58% 51%, 54.5% 57%, 52% 62%, 50% 67%, 48% 62%, 45.5% 57%, 42% 51%, 37% 45%, 30% 39%, 23% 33%, 16% 26%, 9% 18%, 3% 9%); }
+.env__liner { clip-path: polygon(6% 0, 94% 0, 91% 7%, 85% 15%, 78% 22%, 71% 28%, 64% 34%, 58% 40%, 54% 46%, 51.5% 51%, 50% 55%, 48.5% 51%, 46% 46%, 42% 40%, 36% 34%, 29% 28%, 22% 22%, 15% 15%, 9% 7%); }
+.env__flap-wrap { filter: drop-shadow(0 0 .6px var(--gold-line)) drop-shadow(0 0 .6px var(--gold-line)) drop-shadow(0 2px 2px rgb(90 70 40 / .25)); }
+.env__orn-layer { z-index: 3; pointer-events: none; }
+.env__orn-layer .env__orn { position: absolute; height: auto; max-width: none; filter: drop-shadow(0 1px .5px rgb(120 90 30 / .3)); }
+.env__orn--bottom { left: 32%; width: 36%; bottom: 8.5%; }
+.env__orn--flap { position: absolute; left: 29%; width: 42%; top: 15%; height: auto; max-width: none; z-index: 1; pointer-events: none; filter: drop-shadow(0 1px .5px rgb(120 90 30 / .3)); }
+.env__flap .env__liner { z-index: 0; }
+.env__frame { position: absolute; inset: 0; clip-path: polygon(0 0, 50% 54%, 100% 0, 100% 100%, 0 100%); border: 0; border-radius: 0; }
+.env__frame::before { content: ""; position: absolute; inset: 4% 3% 6% 3%; border: 1px solid var(--gold-line); opacity: .85; }
+.env__frame::after { content: ""; position: absolute; inset: calc(4% + 4px) calc(3% + 4px) calc(6% + 4px) calc(3% + 4px); border: 1px solid color-mix(in srgb, var(--gold-line) 55%, transparent); }
+.env__orn-layer .env__bloom { position: absolute; left: auto; right: auto; top: auto; width: 21%; height: auto; max-width: none; bottom: 5%; pointer-events: none; opacity: .95; }
+.env__orn-layer .env__bloom--l { left: 3.5%; } .env__orn-layer .env__bloom--r { right: 3.5%; }
+/* pearl-ivory seal: the paper's shade, lacquered */
+.wax__gloss { opacity: 1; }
+.wax__glint { opacity: .85; } .wax__glint--soft { opacity: .5; }
+.wax__shade { opacity: .45; }
+.wax__mark-edge-dark { fill: #8F7A4E; }
+.wax__mark-face { fill: color-mix(in srgb, var(--wax) 88%, #fff); }
+
+/* a pressed well in deep sage green (the Mehendi green) inside the pearl rim, with pearl lettering: the seal reads at a glance */
+:root { --wax-well: #86AAA2; --wax-well-depth: #6A918A; }
+.wax__mark-face { fill: #F6ECD2; }
+.wax__mark-edge-dark { fill: #17291F; opacity: .85; }
+.wax__mark-edge-light { fill: #FFFFFF; opacity: .55; }
+.wax__shade { opacity: .55; }
+
+/* gold rim and gold lettering on the sage well, echoing the envelope's filigree */
+.wax__mark-face { fill: #F7E3A0; }
+.wax__mark-edge-dark { fill: #3D5A53; opacity: .9; }
+.wax__mark-edge-light { fill: #FFF6D2; opacity: .7; }
+
+/* bigger type on the envelope card */
+.invite-card { --type-quote-size: 11.5px; --type-quote-lh: 17px; --type-h2-size: 27px; --type-h2-lh: 28px; padding: 22px 24px 14px; }
+.invite-card__with { font-size: .6em; }
+
+/* envelope lining: a calm, seamless mint silk (the portrait photo looked stretched inside the landscape envelope) */
+.env__back-liner, .env__liner-img { background: radial-gradient(120% 90% at 50% 40%, #CFE3D8 0%, #BBD3C7 70%, #A9C7BA 100%) !important; }
+.env__back-liner { left: 3%; right: 3%; top: 4%; bottom: 0; }
+
+/* ornate mint damask lining, covering the whole inside (flap underside and back panel) */
+.env__back-liner, .env__liner-img { background: linear-gradient(rgb(255 255 255 / .06), rgb(255 255 255 / .06)), url("../img/lining-damask.webp") center / cover no-repeat, #C7DCCF !important; }
+.env__back-liner { left: 2.5%; right: 2.5%; top: 3%; bottom: 0; box-shadow: inset 0 0 0 1px rgb(196 153 74 / .55), inset 0 0 0 4px rgb(247 237 215 / .0); }
+.env__orn--flap { top: 17%; }
+
+/* greeting above the sealed envelope */
+.stage__invite { position: absolute; left: 0; right: 0; top: 14%; z-index: 6; text-align: center; display: flex; flex-direction: column; gap: 6px; padding: 0 24px; pointer-events: none; transition: opacity .6s ease; }
+.stage__invite-s { font-family: var(--font-script); font-size: clamp(26px, 8vw, 38px); line-height: 1.1; color: #5B9086; }
+.stage__invite-m { font-family: var(--font-caps); font-size: clamp(11px, 3.2vw, 14px); letter-spacing: .16em; text-transform: uppercase; color: #6B4A58; text-wrap: balance; }
+.stage.is-open .stage__invite, .is-open .stage__invite, .is-page .stage__invite { opacity: 0; }
+@media (max-height: 640px) { .stage__invite { top: 8%; } }
+
+/* gold lace band across the lining, as on the ornate liner */
+.env__back-liner::before { content: ""; position: absolute; left: 4%; right: 4%; top: 2%; aspect-ratio: 860 / 135; background: url("../img/lining-band.webp") center / 100% 100% no-repeat; -webkit-mask: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); opacity: .95; }
+
+/* the guest's name under the envelope: larger, in the deep sage of the names, readable on the mint ground */
+.stage__name .signature.shimmer-text { --sh-base: #3F6F66; --sh-mid: #5B9086; --sh-hi: #7FB0A5; --sh-glint: #DDEFEA; }
+.stage__name { filter: none; }
+.stage__name::before { background: radial-gradient(closest-side, rgb(253 247 228 / .75), rgb(253 247 228 / 0)); inset: -18px -24px; }
+.stage__name .signature-line { line-height: 1.05; }
+.stage__name { margin-bottom: 10px; }
+
+/* the invited guest's name, written on the envelope itself (the line under the envelope is kept only for layout) */
+.env__addressee { position: absolute; left: 8%; right: 8%; top: 66%; margin: 0; text-align: center; font-family: var(--font-script); font-weight: 400;
+  font-size: calc(var(--w) * .092); line-height: 1.05; color: #4A6F66; text-shadow: 0 1px 0 rgb(255 250 235 / .8), 0 -.5px 0 rgb(40 70 60 / .25); text-wrap: balance; pointer-events: none; }
+.env__addressee[hidden] { display: none; }
+.stage__name { position: absolute !important; opacity: 0; height: 0; margin: 0 !important; overflow: hidden; pointer-events: none; }
+.stage__name::before { display: none; }
+.env__addressee { top: 71%; left: 15%; right: 15%; font-size: calc(var(--w) * .074); }
+.env__addressee.is-short { top: 71.5%; font-size: calc(var(--w) * .094); }
+/* addressing the guest: "Dear Rabia," */
+.env__addressee::before { content: "Dear "; font-size: .62em; opacity: .85; margin-right: .08em; }
+.env__addressee::after { content: ","; }
+.env__addressee.is-short { font-size: calc(var(--w) * .088); }
+.env__addressee { white-space: nowrap; left: 6%; right: 6%; font-size: calc(var(--w) * .062); top: 72%; }
+.env__addressee.is-short { font-size: calc(var(--w) * .088); top: 71.5%; }
+/* guest name back in the plum-pink it had before */
+.env__addressee { color: #8A4A68; text-shadow: 0 1px 0 rgb(255 250 235 / .85), 0 -.5px 0 rgb(90 40 65 / .2); }
+
+/* "Dear Rabia," leads the greeting above the envelope; the envelope itself carries just the name */
+.env__addressee::before, .env__addressee::after { content: none !important; }
+.env__addressee { font-size: calc(var(--w) * .062); }
+.env__addressee.is-short { font-size: calc(var(--w) * .094); }
+.stage__invite-d { font-family: var(--font-script); font-size: clamp(26px, 8vw, 36px); line-height: 1.1; color: #8A4A68; margin-bottom: 2px; text-wrap: balance; }
+.stage__invite-d[hidden] { display: none; }
+.stage__invite { top: 11%; }
+@media (max-height: 640px) { .stage__invite { top: 6%; } }
+.stage__invite { top: 15%; gap: 10px; }
+@media (max-height: 640px) { .stage__invite { top: 8%; } }
+.stage__invite-d { display: none !important; }
+.stage__invite { top: 14%; gap: 6px; }
+/* "Dear Rabia," stays on top; nothing is written on the envelope itself */
+.stage__invite-d { display: block !important; }
+.stage__invite-d[hidden] { display: none !important; }
+.stage__invite { top: 15%; gap: 10px; }
+.env__addressee { display: none !important; }
